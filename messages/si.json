@@ -1,13 +1,10 @@
-{"Navbar": {
-    "title": "Panduwasnuwara New Multi Purpose Co-Operative Society Ltd",
-    "home": "Home",
-    "businesses": "Businesses",
-    "membership": "Membership",
-    "gallery": "Gallery",
-    "contact": "Contact"
-  },
-  "HomePage": {
-    "title": "ආයුබෝවන්!",
-    "description": "මගේ වෙබ් අඩවියට සාදරයෙන් පිළිගනිමු."
+{
+  "Navbar": {
+    "title": "පඬුවස්නුවර නව විවිධ සේවා සමුපකාර සමිතිය සීමිත",
+    "home": "මුල් පිටුව",
+    "businesses": "ව්‍යාපාර",
+    "membership": "සාමාජිකත්වය",
+    "gallery": "ගැලරිය",
+    "contact": "අප අමතන්න"
   }
 }
