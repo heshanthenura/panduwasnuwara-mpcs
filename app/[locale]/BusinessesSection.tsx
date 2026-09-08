@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { useTranslations, useLocale } from 'next-intl';
 import { 
   ArrowRight, 
   Phone, 
@@ -21,6 +22,7 @@ export interface BusinessService {
   descriptionSi: string;
   descriptionEn: string;
   services: string[];
+  servicesEn: string[];
   manager: string;
   location: string;
   hotline: string;
@@ -44,6 +46,14 @@ export const businessesData: BusinessService[] = [
       'ළමා තැන්පතු',
       'ණය ආපසු ගෙවීමේ නියෝග'
     ],
+    servicesEn: [
+      'Savings Accounts',
+      'Fixed Deposits',
+      'Daily Loan Schemes',
+      'Gold Jewellery Loans',
+      'Children\'s Savings',
+      'Loan Repayment Orders'
+    ],
     manager: 'කේ ඩබ් ජදසිංහ (Manager)',
     location: 'සමිති ගොඩනැගිල්ල, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1012',
@@ -64,6 +74,14 @@ export const businessesData: BusinessService[] = [
       'උත්සව සඳහා තොග ඇණවුම්',
       'ගෙදර බාරගෙන යාමේ සේවය',
       'සාධාරණ මිලේ අත්‍යවශ්‍ය භාණ්ඩ'
+    ],
+    servicesEn: [
+      'Wholesale & Retail Sales',
+      'Member Discount Schemes',
+      'Festive Season Promotions',
+      'Bulk Orders for Events',
+      'Home Delivery Service',
+      'Fair-priced Essential Goods'
     ],
     manager: 'එස් එම් රණසිංහ (Manager)',
     location: 'පාරිභෝගික අංශය, සමිති ගොඩනැගිල්ල, හැට්ටිපොල',
@@ -86,6 +104,14 @@ export const businessesData: BusinessService[] = [
       'නැවුම් තොග සහතිකය',
       'කඩ සාප්පු සඳහා උපකාරක සේවා'
     ],
+    servicesEn: [
+      'Agency Wholesale Pricing',
+      'Island-wide Distribution',
+      'Festive Season Stock',
+      'Credit Facilities for Members',
+      'Fresh Stock Guarantee',
+      'Shop Support Services'
+    ],
     manager: 'ඩබ් පී සිල්වා (Manager)',
     location: 'නියෝජිතායතන ගබදාව, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1014',
@@ -106,6 +132,14 @@ export const businessesData: BusinessService[] = [
       'නිතිපතා බෙදාහැරීම',
       'සාමාජික ණය ක්‍රම',
       'සිල්ලර ප්‍රවර්ධන'
+    ],
+    servicesEn: [
+      'Milk Powder Wholesale',
+      'Infant Formula Products',
+      'Bulk Supply for Shops',
+      'Regular Delivery',
+      'Member Credit Schemes',
+      'Retail Promotions'
     ],
     manager: 'ඒ එල් පෙරේරා (Manager)',
     location: 'නියෝජිතායතන ගබදාව, කුරුණෑගල පාර, හැට්ටිපොල',
@@ -128,6 +162,14 @@ export const businessesData: BusinessService[] = [
       'සෞන්දර්යාගාර සැපයුම',
       'සමයට අනුව ප්‍රවර්ධන'
     ],
+    servicesEn: [
+      'Herbal Beauty Wholesale',
+      'Aloe Vera Products',
+      'White Sandalwood Range',
+      'Gift Packages',
+      'Salon Supply',
+      'Seasonal Promotions'
+    ],
     manager: 'එම් ඩබ් ප්‍රනාන්දු (Manager)',
     location: 'ප්‍රධාන කාර්යාලය, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1016',
@@ -149,6 +191,14 @@ export const businessesData: BusinessService[] = [
       'තොග සැපයුම',
       'සාමාජික විශේෂ දීමනා'
     ],
+    servicesEn: [
+      'Baby Care Products (Baby Cheramy)',
+      'Personal Care',
+      'Hair Care (Kumarika)',
+      'Household Items',
+      'Wholesale Supply',
+      'Member Special Offers'
+    ],
     manager: 'බී ජී කුමාරි (Manager)',
     location: 'ප්‍රධාන කාර්යාලය, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1017',
@@ -168,6 +218,13 @@ export const businessesData: BusinessService[] = [
       'උත්සව තොග ඇණවුම්',
       'ණය පහසුකම්',
       'නිසි වේලාවට බෙදාහැරීම'
+    ],
+    servicesEn: [
+      'Wholesale Supply',
+      'Retail Distribution',
+      'Bulk Event Orders',
+      'Credit Facilities',
+      'Timely Delivery'
     ],
     manager: 'ඩී එස් රත්නායක (Manager)',
     location: 'නියෝජිතායතන ගබදාව, කුරුණෑගල පාර, හැට්ටිපොල',
@@ -189,6 +246,13 @@ export const businessesData: BusinessService[] = [
       'සාමාජිකයින්ට ප්‍රමුඛතා පෝලිම',
       'වායු හා ජල සේවා'
     ],
+    servicesEn: [
+      'Petrol 92 / 95',
+      'Auto Diesel & Super Diesel',
+      'Fuel Pass Scheme for Members',
+      'Priority Queue for Members',
+      'Air & Water Services'
+    ],
     manager: 'එච් එම් බණ්ඩාර (Manager)',
     location: 'කුරුණෑගල පාර හංදිය, හැට්ටිපොල',
     hotline: '037 229 1019',
@@ -208,6 +272,12 @@ export const businessesData: BusinessService[] = [
       'මරණයකදී ක්ෂණික සහාය',
       'අඩු මිලට අවමංගල්‍ය උපකරණ'
     ],
+    servicesEn: [
+      'Member & Family Contribution Schemes',
+      'Financial Assistance for Funeral Costs',
+      'Immediate Support at Time of Death',
+      'Affordable Funeral Equipment'
+    ],
     manager: 'ටී එම් විජේසිංහ (Manager)',
     location: 'සමිති ගොඩනැගිල්ල, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1020',
@@ -216,12 +286,15 @@ export const businessesData: BusinessService[] = [
 ];
 
 export default function BusinessesSection() {
+  const t = useTranslations('Businesses');
+  const locale = useLocale();
+  const isSi = locale === 'si';
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessService | null>(null);
 
   return (
     <section 
       id="businesses-services" 
-      className="w-full bg-[#F8FAFC] py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-t border-slate-200/90 font-sans scroll-mt-24"
+      className="w-full bg-slate-50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 font-sans scroll-mt-20"
     >
       <div className="max-w-6xl mx-auto space-y-10 sm:space-y-12">
 
@@ -229,15 +302,15 @@ export default function BusinessesSection() {
         <div className="text-center space-y-2.5 max-w-3xl mx-auto">
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 flex items-center justify-center gap-1.5">
             <Building2 className="w-4 h-4 text-slate-400" />
-            <span>OUR BUSINESSES & SERVICES • අපගේ ව්‍යාපාර අංශ</span>
+            <span>{t('eyebrow')}</span>
           </p>
 
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
-            ව්‍යාපාර හා සේවා අංශ <span className="text-slate-400 font-normal">|</span> Our Businesses
+            {t('heading')} <span className="text-slate-400 font-normal">|</span> <span className="text-slate-500 font-normal">{t('headingSub')}</span>
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
-            පඬුවස්නුවර නව විවිධ සේවා සමුපකාර සමිතිය මගින් පවත්වාගෙන යනු ලබන ප්‍රධාන ව්‍යාපාරික හා ප්‍රජා සේවා අංශ
+            {t('subtext')}
           </p>
         </div>
 
@@ -246,7 +319,7 @@ export default function BusinessesSection() {
           {businessesData.map((item) => (
             <div
               key={item.key}
-              className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between"
+              className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-[#003399]/40 transition-all flex flex-col justify-between"
             >
               <div>
                 {/* 3. Top Baseline Alignment: items-start */}
@@ -265,29 +338,26 @@ export default function BusinessesSection() {
                   {/* Title Stack */}
                   <div>
                     <h3 className="text-base font-bold text-slate-900 leading-snug">
-                      {item.titleSi}
+                      {isSi ? item.titleSi : item.titleEn}
                     </h3>
-                    <p className="text-xs font-medium text-slate-500 mt-0.5">
-                      {item.titleEn}
-                    </p>
                   </div>
                 </div>
 
                 {/* Description Paragraph */}
-                {item.descriptionSi && (
+                {(isSi ? item.descriptionSi : item.descriptionEn) && (
                   <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed mb-4">
-                    {item.descriptionSi}
+                    {isSi ? item.descriptionSi : item.descriptionEn}
                   </p>
                 )}
               </div>
 
-              {/* 4. Card Padding & Footer Polish: mt-auto pt-3 border-t border-slate-100 flex items-center justify-end text-xs font-semibold text-slate-700 hover:text-slate-900 */}
-              <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-end text-xs font-semibold text-slate-700 hover:text-slate-900">
+              {/* 4. Card Padding & Footer Polish */}
+              <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-end text-xs font-semibold">
                 <button
                   onClick={() => setSelectedBusiness(item)}
-                  className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="text-xs font-semibold text-[#003399] hover:text-[#002266] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <span>විස්තර බලන්න • View Details</span>
+                  <span>{t('viewDetails')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -322,28 +392,20 @@ export default function BusinessesSection() {
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-xl font-bold text-slate-900">
-                    {selectedBusiness.titleSi} <span className="text-slate-400 font-normal">|</span> {selectedBusiness.titleEn}
+                    {isSi ? selectedBusiness.titleSi : selectedBusiness.titleEn}
                   </h3>
                   <p className="text-xs font-semibold text-slate-600">
-                    {selectedBusiness.taglineSi}
-                  </p>
-                  <p className="text-xs text-slate-500 font-medium">
-                    {selectedBusiness.taglineEn}
+                    {isSi ? selectedBusiness.taglineSi : selectedBusiness.taglineEn}
                   </p>
                 </div>
               </div>
 
               {/* Full Description */}
-              {selectedBusiness.descriptionSi && (
-                <div className="space-y-2 bg-[#F8FAFC] p-4 rounded-xl border border-slate-200/80">
+              {(isSi ? selectedBusiness.descriptionSi : selectedBusiness.descriptionEn) && (
+                <div className="bg-[#F8FAFC] p-4 rounded-xl border border-slate-200/80">
                   <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal">
-                    {selectedBusiness.descriptionSi}
+                    {isSi ? selectedBusiness.descriptionSi : selectedBusiness.descriptionEn}
                   </p>
-                  {selectedBusiness.descriptionEn && (
-                    <p className="text-xs text-slate-500 leading-relaxed border-t border-slate-200/60 pt-2">
-                      {selectedBusiness.descriptionEn}
-                    </p>
-                  )}
                 </div>
               )}
 
@@ -351,11 +413,11 @@ export default function BusinessesSection() {
               <div className="space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-slate-600" />
-                  <span>ලබාගත හැකි ප්‍රධාන සේවාවන් • Offered Services</span>
+                  <span>{t('offeredServices')}</span>
                 </h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {selectedBusiness.services.map((svc, idx) => (
+                  {(isSi ? selectedBusiness.services : selectedBusiness.servicesEn).map((svc, idx) => (
                     <div 
                       key={idx}
                       className="flex items-center gap-2 text-xs text-slate-700 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100"
@@ -371,15 +433,15 @@ export default function BusinessesSection() {
               <div className="pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-600">
                 <div className="flex items-center gap-2">
                   <UserCheck className="w-4 h-4 text-slate-500 shrink-0" />
-                  <span><strong>පරිපාලක / Manager:</strong> {selectedBusiness.manager}</span>
+                  <span><strong>{t('manager')}:</strong> {selectedBusiness.manager}</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <MapPin className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-                  <span><strong>ස්ථානය / Location:</strong> {selectedBusiness.location}</span>
+                  <span><strong>{t('location')}:</strong> {selectedBusiness.location}</span>
                 </div>
                 <div className="flex items-center gap-2 pt-1">
                   <Phone className="w-4 h-4 text-slate-500 shrink-0" />
-                  <span><strong>ක්ෂණික ඇමතුම් / Hotline:</strong></span>
+                  <span><strong>{t('hotline')}:</strong></span>
                   <a 
                     href={`tel:${selectedBusiness.hotline.replace(/\s+/g, '')}`}
                     className="font-bold text-slate-900 underline hover:text-blue-600 transition-colors"
@@ -395,7 +457,7 @@ export default function BusinessesSection() {
                   onClick={() => setSelectedBusiness(null)}
                   className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors"
                 >
-                  වසා දමන්න • Close
+                  {t('close')}
                 </button>
               </div>
 
