@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { User, Phone, Mail, GraduationCap, Building2 } from 'lucide-react';
 
 export interface BoardMember {
@@ -125,6 +126,10 @@ interface BoardSectionProps {
 }
 
 export default function BoardSection({ members = boardMembersData }: BoardSectionProps) {
+  const t = useTranslations('Board');
+  const locale = useLocale();
+  const isSi = locale === 'si';
+
   const chairman = members.find(m => m.roleType === 'chairman');
   const viceChairman = members.find(m => m.roleType === 'vice_chairman');
   const directors = members.filter(m => m.roleType === 'director');
@@ -141,18 +146,19 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
           <User className="w-8 h-8 text-slate-400" />
         </div>
 
-        {/* Role Badge */}
-        <div className="mt-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200/60 max-w-[95%] mx-auto whitespace-normal">
-          {member.positionSi} • {member.positionEn}
+        {/* Role Badge — locale-aware */}
+        <div className={`mt-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full max-w-[95%] mx-auto whitespace-normal ${
+          member.roleType === 'chairman' || member.roleType === 'vice_chairman'
+            ? 'bg-[#003399]/10 text-[#003399] border border-[#003399]/20'
+            : 'bg-slate-100 text-slate-700 border border-slate-200/60'
+        }`}>
+          {isSi ? member.positionSi : member.positionEn}
         </div>
 
-        {/* Sinhala & English Name Stack */}
+        {/* Name — locale-aware single language */}
         <h4 className="mt-1.5 text-base font-semibold text-slate-900 leading-tight">
-          {member.nameSi}
+          {isSi ? member.nameSi : member.nameEn}
         </h4>
-        <p className="mt-0.5 text-xs font-medium text-slate-500">
-          {member.nameEn}
-        </p>
 
         {/* Qualification Tag */}
         <div className="mt-1.5 text-[11px] text-slate-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 flex items-center justify-center gap-1 w-full">
@@ -166,7 +172,7 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
         <a
           href={`tel:${member.phone.replace(/\s+/g, '')}`}
           className="flex items-center gap-1 hover:text-slate-900 transition-colors"
-          title={`Call ${member.nameEn}`}
+          title={t('callTitle', { name: member.nameEn })}
         >
           <Phone className="w-3 h-3 text-slate-500" />
           <span>{member.phone}</span>
@@ -177,7 +183,7 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
         <a
           href={`mailto:${member.email}`}
           className="flex items-center gap-1 hover:text-slate-900 transition-colors"
-          title={`Email ${member.nameEn}`}
+          title={t('emailTitle', { name: member.nameEn })}
         >
           <Mail className="w-3 h-3 text-slate-500" />
           <span>{member.email}</span>
@@ -189,23 +195,23 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
   return (
     <section 
       id="director-board" 
-      className="w-full bg-[#F8FAFC] pt-24 sm:pt-28 pb-16 px-4 sm:px-6 lg:px-8 border-y border-slate-200/90 font-sans scroll-mt-28"
+      className="w-full bg-slate-50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 font-sans scroll-mt-20"
     >
       <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10">
 
-        {/* Centered Main Page Header with Navbar Clearance */}
+        {/* Centered Main Page Header */}
         <div className="text-center max-w-3xl mx-auto mb-8 space-y-1.5 scroll-mt-28">
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 flex items-center justify-center gap-1.5">
             <Building2 className="w-3.5 h-3.5 text-slate-400" />
-            <span>GOVERNANCE & LEADERSHIP • පාලන අධිකාරිය</span>
+            <span>{t('eyebrow')}</span>
           </p>
 
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Board of Directors <span className="text-slate-400 font-normal">|</span> අධ්‍යක්ෂ මණ්ඩලය
+            {t('heading')} <span className="text-slate-400 font-normal">|</span> <span className="text-slate-500 font-normal">{t('headingSub')}</span>
           </h2>
 
           <p className="text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
-            පඬුවස්නුවර නව විවිධ සේවා සමුපකාර සමිතියේ උපායමාර්ගික පාලනය සහ පරිපාලන නායකත්වය
+            {t('subtext')}
           </p>
         </div>
 
@@ -213,10 +219,10 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
         <div className="space-y-4 max-w-5xl mx-auto w-full px-4 scroll-mt-28">
           <div className="flex items-center justify-between w-full pb-2 border-b border-slate-200/80">
             <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-800 uppercase">
-              EXECUTIVE LEADERSHIP • විධායක නායකත්වය
+              {t('execTier')}
             </h3>
-            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200/50">
-              2 Members
+            <span className="text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80 px-2.5 py-0.5 rounded-full">
+              {t('execCount', { count: 2 })}
             </span>
           </div>
 
@@ -230,10 +236,10 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
         <div className="space-y-4 max-w-5xl mx-auto w-full px-4 scroll-mt-28">
           <div className="flex items-center justify-between w-full pb-2 border-b border-slate-200/80">
             <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-800 uppercase">
-              BOARD DIRECTORS • අධ්‍යක්ෂ මණ්ඩල සාමාජිකයින්
+              {t('directorTier')}
             </h3>
-            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200/50">
-              {directors.length} Board Members
+            <span className="text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80 px-2.5 py-0.5 rounded-full">
+              {t('directorCount', { count: directors.length })}
             </span>
           </div>
 
@@ -246,10 +252,10 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
         <div className="space-y-4 max-w-5xl mx-auto w-full px-4 scroll-mt-28">
           <div className="flex items-center justify-between w-full pb-2 border-b border-slate-200/80">
             <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-800 uppercase">
-              ADMINISTRATIVE OFFICERS • පාලන හා විධායක නිලධාරීන්
+              {t('officerTier')}
             </h3>
-            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200/50">
-              2 Officers
+            <span className="text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80 px-2.5 py-0.5 rounded-full">
+              {t('officerCount', { count: officers.length })}
             </span>
           </div>
 
