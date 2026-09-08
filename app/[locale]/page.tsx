@@ -6,20 +6,11 @@ import BusinessesSection from '@/app/[locale]/BusinessesSection';
 export default function Home() {
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 text-gray-900">
+    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900">
       <HeroSection />
-      {/* Spacing between hero section and Director Board section */}
-      <div className="my-6 sm:my-10">
-        <BoardSection />
-      </div>
-      {/* About Us section below Board section */}
-      <div className="mb-6 sm:mb-10">
-        <AboutSection />
-      </div>
-      {/* Our Businesses & Services Section */}
-      <div className="mb-12">
-        <BusinessesSection />
-      </div>
+      <BoardSection />
+      <AboutSection />
+      <BusinessesSection />
     </div>
   );
 }
