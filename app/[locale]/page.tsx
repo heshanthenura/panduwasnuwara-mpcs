@@ -16,6 +16,10 @@ export default function Home() {
       <div className="mb-6 sm:mb-10">
         <AboutSection />
       </div>
+      {/* Our Businesses & Services Section */}
+      <div className="mb-12">
+        <BusinessesSection />
+      </div>
     </div>
   );
 }
