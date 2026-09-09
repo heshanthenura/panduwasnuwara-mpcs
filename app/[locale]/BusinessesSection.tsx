@@ -291,51 +291,41 @@ export default function BusinessesSection() {
   const isSi = locale === 'si';
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessService | null>(null);
 
-  // Color mapping matching Sri Lanka Co-op identity
+  // Category details
   const getCategoryTheme = (key: string) => {
     switch (key) {
       case 'rural-bank':
         return {
-          topBorder: 'border-t-4 border-t-[#003399]',
-          badge: 'bg-blue-50 text-[#003399] border-blue-200/80',
-          hoverBorder: 'hover:border-blue-400',
           category: 'Banking & Finance',
           categorySi: 'ග්‍රාමීය බැංකු සේවා'
         };
+      case 'consumer':
       case 'coop-city':
       case 'mini-super':
         return {
-          topBorder: 'border-t-4 border-t-emerald-600',
-          badge: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
-          hoverBorder: 'hover:border-emerald-400',
           category: 'Retail & Consumer',
           categorySi: 'පාරිභෝගික වෙළඳසැල්'
         };
       case 'fuel-station':
         return {
-          topBorder: 'border-t-4 border-t-amber-500',
-          badge: 'bg-amber-50 text-amber-800 border-amber-200/80',
-          hoverBorder: 'hover:border-amber-400',
           category: 'Energy & Fuel',
           categorySi: 'ඉන්ධන සැපයුම'
         };
       case 'nestle-agency':
       case 'prima-agency':
       case 'ristbury-tiara':
+      case 'maliban-biscuits':
+      case 'maliban-kiri':
+      case 'nature-secrets':
+      case 'hemas':
       case 'tobacco-agency':
         return {
-          topBorder: 'border-t-4 border-t-sky-600',
-          badge: 'bg-sky-50 text-sky-800 border-sky-200/80',
-          hoverBorder: 'hover:border-sky-400',
           category: 'Commercial Distribution',
           categorySi: 'වාණිජ නියෝජිතායතන'
         };
       case 'funeral':
       default:
         return {
-          topBorder: 'border-t-4 border-t-purple-600',
-          badge: 'bg-purple-50 text-purple-800 border-purple-200/80',
-          hoverBorder: 'hover:border-purple-400',
           category: 'Community Welfare',
           categorySi: 'ප්‍රජා සත්කාර සේවා'
         };
@@ -345,25 +335,22 @@ export default function BusinessesSection() {
   return (
     <section 
       id="businesses-services" 
-      className="w-full bg-slate-50 pt-10 pb-16 sm:pt-12 sm:pb-20 px-4 sm:px-6 lg:px-8 font-sans scroll-mt-20"
+      className="w-full bg-[#FAFAFA] pt-10 pb-16 sm:pt-12 sm:pb-20 px-4 sm:px-6 lg:px-8 font-sans scroll-mt-20"
     >
       <div className="max-w-6xl mx-auto space-y-10 sm:space-y-12">
 
         {/* Section Header with Co-op Rainbow Accent */}
         <div className="text-center space-y-2 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/70 text-xs font-bold uppercase tracking-wider text-amber-800">
-            <Building2 className="w-3.5 h-3.5 text-amber-700" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-800">
+            <Building2 className="w-3.5 h-3.5 text-slate-700" />
             <span>{t('eyebrow')}</span>
           </div>
 
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight pt-1">
+          <h2 className="font-condensed text-2xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight pt-1">
             {t('heading')}
           </h2>
 
-          {/* Sri Lanka Co-op 7-Color Rainbow Micro-Ribbon under Title */}
-          <div className="h-1 w-20 mx-auto rounded-full bg-gradient-to-r from-[#DC2626] via-[#EA580C] via-[#EAB308] via-[#16A34A] via-[#0284C7] via-[#1D4ED8] to-[#9333EA] my-3" />
-
-          <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed pt-1">
+          <p className="text-sm sm:text-base text-neutral-600 max-w-xl mx-auto leading-relaxed pt-1">
             {t('subtext')}
           </p>
         </div>
@@ -376,12 +363,12 @@ export default function BusinessesSection() {
             return (
               <div
                 key={item.key}
-                className={`group p-6 rounded-2xl border border-slate-200/80 ${theme.topBorder} bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 ${theme.hoverBorder} transition-all duration-300 flex flex-col justify-between`}
+                className="group p-6 sm:p-7 rounded-2xl sm:rounded-3xl border border-neutral-200/80 bg-white shadow-xs hover:shadow-md hover:border-neutral-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   {/* Category Pill & Top Baseline Alignment */}
                   <div className="flex items-center justify-between gap-2 mb-3.5">
-                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${theme.badge}`}>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-700 border-slate-200">
                       {isSi ? theme.categorySi : theme.category}
                     </span>
                   </div>
