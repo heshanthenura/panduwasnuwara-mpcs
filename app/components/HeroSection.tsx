@@ -36,12 +36,9 @@ export default function HeroSection() {
           <span className="text-amber-300 font-semibold">{t('badgeEst')}</span>
         </div>
 
-        {/* Hero Title with Co-op Golden Wheat / Emerald gradient text */}
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight max-w-4xl mb-5 drop-shadow-sm">
-          {t('titlePrefix')}{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-emerald-300">
-            {t('titleHighlight')}
-          </span>
+        {/* Hero Title with Solid White Clean Color */}
+        <h1 className="font-condensed text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] max-w-4xl mb-5">
+          {t('titlePrefix')} {t('titleHighlight')}
         </h1>
 
         {/* Hero Tagline */}
@@ -53,7 +50,7 @@ export default function HeroSection() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto">
           <Link
             href="#businesses-services"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-[#003399] to-blue-700 text-white font-semibold text-sm shadow-lg hover:shadow-emerald-900/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#003399] hover:bg-[#002266] text-white font-semibold text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             <span>{t('ctaBusinesses')}</span>
             <ArrowRight className="w-4 h-4" />
