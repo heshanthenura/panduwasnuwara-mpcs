@@ -17,26 +17,29 @@ export default function Footer() {
   const t = useTranslations('Footer');
 
   return (
-    <footer id="contact" className="w-full bg-[#0b1329] text-slate-300 font-sans border-t border-slate-800">
+    <footer id="contact" className="w-full bg-[#080d1a] text-slate-300 font-sans border-t border-slate-800 relative">
       
-      {/* Upper Main Footer Grid */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 py-12 sm:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10">
+      {/* Signature Co-op 7-Color Rainbow Micro-Ribbon at Footer Top */}
+      <div className="w-full h-1 bg-gradient-to-r from-[#DC2626] via-[#EA580C] via-[#EAB308] via-[#16A34A] via-[#0284C7] via-[#1D4ED8] to-[#9333EA]" />
 
-          {/* Column 1: Organization Branding (lg:col-span-4) */}
-          <div className="lg:col-span-4 space-y-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-xl bg-white p-1 flex items-center justify-center shrink-0 shadow-md">
+      {/* Upper Main Footer Grid */}
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-14 sm:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+
+          {/* Column 1: Organization Branding (lg:col-span-5) */}
+          <div className="lg:col-span-5 space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-13 h-13 rounded-2xl bg-white p-1.5 flex items-center justify-center shrink-0 shadow-lg border border-white/20">
                 <Image
                   src="/logo-photo.jpg"
                   alt="Panduwasnuwara MPCS Logo"
-                  width={44}
-                  height={44}
-                  className="w-full h-full object-contain rounded-lg"
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white leading-snug">
+                <h3 className="text-base sm:text-lg font-bold text-white leading-snug">
                   {t('orgNameSi')}
                 </h3>
                 <p className="text-xs text-slate-400 font-medium tracking-wide mt-0.5">
@@ -45,25 +48,27 @@ export default function Footer() {
               </div>
             </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed max-w-sm pt-1">
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md pt-1">
               {t('orgDesc')}
             </p>
 
             {/* Official Registration & Trust Badge */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-300 mt-1">
+              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300 shadow-xs">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>{t('regPill')}</span>
+                <span className="font-medium">{t('regNo')}</span>
+                <span className="w-px h-3 bg-white/20" />
+                <span className="text-slate-400 font-normal">{t('estDate')}</span>
               </div>
             </div>
 
             {/* Social Links */}
-            <div className="pt-2 flex items-center gap-3">
+            <div className="pt-2 flex items-center gap-2.5">
               <a
                 href="https://www.facebook.com/profile.php?id=100054449380983"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-600 transition-all cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-600 transition-all cursor-pointer shadow-xs"
                 aria-label="Facebook Page"
               >
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -75,7 +80,7 @@ export default function Footer() {
                 href="https://wa.me/94764247716"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-emerald-600 hover:border-emerald-600 transition-all cursor-pointer shadow-xs"
                 aria-label="WhatsApp Support"
               >
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -86,94 +91,113 @@ export default function Footer() {
           </div>
 
           {/* Column 2: Quick Links (lg:col-span-3) */}
-          <div className="lg:col-span-3 space-y-3">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-2">
-              <ArrowRight className="w-3.5 h-3.5 text-amber-400/90" />
-              <span>{t('quickLinks')}</span>
-            </h4>
-            <ul className="space-y-2 text-xs font-medium">
+          <div className="lg:col-span-3 space-y-4">
+            <div className="flex items-center gap-2 pb-2.5 border-b border-white/10">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                {t('quickLinks')}
+              </h4>
+            </div>
+
+            <ul className="space-y-2.5 text-xs font-medium">
               <li>
-                <Link href="/" className="text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1.5">
+                <Link href="/" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkHome')}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/members" className="text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1.5">
+                <Link href="/members" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkMembers')}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/members?list=voters" className="text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1.5">
+                <Link href="/members?list=voters" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkVoters')}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/apply" className="text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1.5">
+                <Link href="/apply" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkApply')}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/gallery" className="text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1.5">
+                <Link href="/gallery" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkGallery')}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/#contact" className="text-slate-300 hover:text-amber-400 transition-colors inline-flex items-center gap-1.5">
+                <Link href="/#contact" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkContact')}</span>
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Contact & Address (lg:col-span-5) */}
-          <div className="lg:col-span-5 space-y-4">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-2">
-              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{t('contactTitle')}</span>
-            </h4>
+          {/* Column 3: Contact & Address (lg:col-span-4) */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="flex items-center gap-2 pb-2.5 border-b border-white/10">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                {t('contactTitle')}
+              </h4>
+            </div>
 
             <div className="space-y-3.5 text-xs">
               {/* Address */}
-              <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-amber-400/90 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <MapPin className="w-4 h-4 text-amber-400" />
+                </div>
                 <div>
-                  <p className="text-slate-200 font-medium">{t('addressSi')}</p>
-                  <p className="text-slate-400 text-[11px]">{t('addressEn')}</p>
+                  <p className="text-slate-200 font-semibold">{t('addressSi')}</p>
+                  <p className="text-slate-400 text-[11px] mt-0.5">{t('addressEn')}</p>
                 </div>
               </div>
 
               {/* Phone */}
-              <div className="flex items-start gap-2.5">
-                <Phone className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Phone className="w-4 h-4 text-emerald-400" />
+                </div>
                 <div>
-                  <p className="text-slate-400 text-[11px] font-semibold uppercase tracking-wide">{t('hotlineLabel')}</p>
-                  <div className="flex items-center gap-2 text-slate-100 font-bold mt-0.5">
+                  <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">{t('hotlineLabel')}</p>
+                  <div className="flex items-center gap-2 text-white font-bold mt-0.5">
                     <a href="tel:0372291011" className="hover:text-amber-400 transition-colors">037 229 1011</a>
-                    <span className="text-slate-600">/</span>
+                    <span className="w-px h-3 bg-white/20 mx-0.5" />
                     <a href="tel:0764247716" className="hover:text-amber-400 transition-colors">076 424 7716</a>
                   </div>
                 </div>
               </div>
 
               {/* Email */}
-              <div className="flex items-start gap-2.5">
-                <Mail className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Mail className="w-4 h-4 text-sky-400" />
+                </div>
                 <div>
-                  <p className="text-slate-400 text-[11px] font-semibold uppercase tracking-wide">{t('emailLabel')}</p>
-                  <a href="mailto:panduwasnuwara@mpcs.lk" className="text-slate-100 hover:text-amber-400 transition-colors font-medium">
+                  <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">{t('emailLabel')}</p>
+                  <a href="mailto:panduwasnuwara@mpcs.lk" className="text-slate-200 hover:text-amber-400 transition-colors font-medium mt-0.5 block">
                     panduwasnuwara@mpcs.lk
                   </a>
                 </div>
               </div>
 
               {/* Opening Hours */}
-              <div className="flex items-start gap-2.5 pt-2 border-t border-slate-800/80">
-                <Clock className="w-4 h-4 text-amber-400/90 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 pt-3 border-t border-white/10">
+                <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                </div>
                 <div className="space-y-0.5">
-                  <p className="text-slate-400 text-[11px] font-semibold uppercase tracking-wide">
-                  {t('hoursLabel')}
+                  <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                    {t('hoursLabel')}
                   </p>
-                  <p className="text-slate-200 text-[11px]">{t('hoursWeekday')}</p>
+                  <p className="text-slate-200 text-[11px] font-medium">{t('hoursWeekday')}</p>
                   <p className="text-slate-400 text-[11px]">{t('hoursSaturday')}</p>
                 </div>
               </div>
@@ -184,15 +208,15 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom Bar: Copyright */}
-      <div className="w-full bg-[#070d1c] border-t border-slate-800/80 py-4 px-8 sm:px-12 lg:px-16">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 text-center sm:text-left">
+      {/* Bottom Bar: Copyright with Left-Padding Protection */}
+      <div className="w-full bg-[#050914] border-t border-white/10 py-5 px-6 sm:px-10 lg:px-16">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 text-center sm:text-left pl-14 sm:pl-0">
           <p className="text-xs text-slate-400">
             {t('copyright')}
           </p>
-          <div className="flex items-center gap-4 text-[11px] text-slate-400 font-medium">
+          <div className="flex items-center gap-3.5 text-[11px] text-slate-400 font-medium">
             <Link href="/" className="hover:text-slate-200 transition-colors">{t('privacyPolicy')}</Link>
-            <span>•</span>
+            <span className="w-px h-3 bg-white/15" />
             <Link href="/" className="hover:text-slate-200 transition-colors">{t('termsOfService')}</Link>
           </div>
         </div>

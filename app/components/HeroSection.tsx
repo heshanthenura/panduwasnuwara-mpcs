@@ -1,11 +1,115 @@
+'use client';
+
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { ArrowRight, Users, ShieldCheck, Building2, Award } from 'lucide-react';
+
 export default function HeroSection() {
+  const t = useTranslations('Hero');
+
   return (
     <section
-      className="w-full h-dvh bg-cover bg-center bg-no-repeat relative"
+      className="relative w-full min-h-[90vh] lg:min-h-screen bg-cover bg-center bg-no-repeat flex flex-col justify-between"
       style={{ backgroundImage: "url('/hero-bg.jpg')" }}
     >
-      <div className="w-full h-full max-w-7xl mx-auto px-4 flex flex-col items-center">
+      {/* Cinematic gradient overlay protecting text legibility while revealing building architecture */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-900/70 to-slate-950/95" />
+
+      {/* Main Hero Content */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 sm:pt-36 pb-12 flex-1 flex flex-col items-center justify-center text-center">
+        
+        {/* Official Sri Lanka Co-op Heritage Pill Badge */}
+        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-white/20 text-xs text-slate-200 shadow-xl mb-6 hover:border-amber-400/40 transition-colors">
+          <div className="w-5 h-5 rounded-full overflow-hidden bg-white shrink-0 p-0.5 shadow-xs">
+            <Image
+              src="/logo-photo.jpg"
+              alt="Co-op Emblem"
+              width={20}
+              height={20}
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <span className="font-medium tracking-wide">{t('badgeMovement')}</span>
+          <span className="w-px h-3 bg-white/25" />
+          <span className="text-amber-300 font-semibold">{t('badgeEst')}</span>
+        </div>
+
+        {/* Hero Title with Co-op Golden Wheat / Emerald gradient text */}
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight max-w-4xl mb-5 drop-shadow-sm">
+          {t('titlePrefix')}{' '}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-emerald-300">
+            {t('titleHighlight')}
+          </span>
+        </h1>
+
+        {/* Hero Tagline */}
+        <p className="text-sm sm:text-base md:text-lg text-slate-200 max-w-2xl mx-auto font-normal leading-relaxed mb-8">
+          {t('description')}
+        </p>
+
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto">
+          <Link
+            href="#businesses-services"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-[#003399] to-blue-700 text-white font-semibold text-sm shadow-lg hover:shadow-emerald-900/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
+          >
+            <span>{t('ctaBusinesses')}</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+
+          <Link
+            href="#director-board"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/25 text-white font-medium text-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <span>{t('ctaBoard')}</span>
+          </Link>
+        </div>
+
       </div>
+
+      {/* Floating Glassmorphic Metric Ribbon at Hero Base */}
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-4 pb-8">
+        <div className="bg-slate-900/80 backdrop-blur-xl border border-white/15 rounded-2xl p-4 sm:p-5 shadow-2xl grid grid-cols-2 md:grid-cols-4 gap-4 divide-y md:divide-y-0 md:divide-x divide-white/10 text-center">
+          
+          <div className="flex flex-col items-center justify-center px-2">
+            <div className="flex items-center gap-1.5 text-amber-400 mb-0.5">
+              <Award className="w-4 h-4" />
+              <span className="text-base sm:text-lg font-bold">{t('statYears')}</span>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">{t('statYearsLabel')}</span>
+          </div>
+
+          <div className="flex flex-col items-center justify-center px-2 pt-3 md:pt-0">
+            <div className="flex items-center gap-1.5 text-emerald-400 mb-0.5">
+              <Building2 className="w-4 h-4" />
+              <span className="text-base sm:text-lg font-bold">{t('statUnits')}</span>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">{t('statUnitsLabel')}</span>
+          </div>
+
+          <div className="flex flex-col items-center justify-center px-2 pt-3 md:pt-0">
+            <div className="flex items-center gap-1.5 text-sky-400 mb-0.5">
+              <Users className="w-4 h-4" />
+              <span className="text-base sm:text-lg font-bold">{t('statMembers')}</span>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">{t('statMembersLabel')}</span>
+          </div>
+
+          <div className="flex flex-col items-center justify-center px-2 pt-3 md:pt-0">
+            <div className="flex items-center gap-1.5 text-rose-400 mb-0.5">
+              <ShieldCheck className="w-4 h-4" />
+              <span className="text-base sm:text-lg font-bold">{t('statReg')}</span>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">{t('statRegLabel')}</span>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Signature Co-op 7-Color Rainbow Micro-Ribbon at Section Bottom */}
+      <div className="relative z-10 w-full h-1 bg-gradient-to-r from-[#DC2626] via-[#EA580C] via-[#EAB308] via-[#16A34A] via-[#0284C7] via-[#1D4ED8] to-[#9333EA]" />
     </section>
   );
 }

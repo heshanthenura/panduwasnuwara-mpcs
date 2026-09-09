@@ -135,131 +135,170 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
   const directors = members.filter(m => m.roleType === 'director');
   const officers = members.filter(m => m.roleType === 'officer');
 
-  const renderCard = (member: BoardMember) => (
-    <div 
-      key={member.id}
-      className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow pt-5 pb-4 px-4 flex flex-col justify-between overflow-hidden text-center"
-    >
-      <div className="flex flex-col items-center text-center w-full">
-        {/* Compact Avatar Circle (64px x 64px) */}
-        <div className="w-16 h-16 rounded-full ring-4 ring-slate-100 bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-slate-400 shrink-0 shadow-inner">
-          <User className="w-8 h-8 text-slate-400" />
+  const renderCard = (member: BoardMember) => {
+    const isExec = member.roleType === 'chairman' || member.roleType === 'vice_chairman';
+    const isDirector = member.roleType === 'director';
+    const isOfficer = member.roleType === 'officer';
+
+    // Theme tokens based on Co-op logo hierarchy
+    const theme = isExec
+      ? {
+          topBorder: 'border-t-4 border-t-[#003399]',
+          badge: 'bg-blue-50 text-[#003399] border-blue-200/80',
+          avatarRing: 'ring-2 ring-amber-400/50 bg-gradient-to-br from-amber-50 via-white to-blue-50',
+          avatarIcon: 'text-[#003399]',
+          glow: 'group-hover:border-amber-400/40',
+        }
+      : isDirector
+      ? {
+          topBorder: 'border-t-4 border-t-emerald-600',
+          badge: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+          avatarRing: 'ring-2 ring-emerald-300/50 bg-gradient-to-br from-emerald-50 via-white to-slate-50',
+          avatarIcon: 'text-emerald-700',
+          glow: 'group-hover:border-emerald-300',
+        }
+      : {
+          topBorder: 'border-t-4 border-t-sky-600',
+          badge: 'bg-sky-50 text-sky-800 border-sky-200/80',
+          avatarRing: 'ring-2 ring-sky-300/50 bg-gradient-to-br from-sky-50 via-white to-slate-50',
+          avatarIcon: 'text-sky-700',
+          glow: 'group-hover:border-sky-300',
+        };
+
+    return (
+      <div 
+        key={member.id}
+        className={`group bg-white rounded-2xl border border-slate-200/80 ${theme.topBorder} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 pt-6 pb-4 px-5 flex flex-col justify-between overflow-hidden text-center relative`}
+      >
+        <div className="flex flex-col items-center text-center w-full">
+          {/* Avatar Icon with Tier Ring & Warm Gradient */}
+          <div className={`w-16 h-16 rounded-2xl ${theme.avatarRing} flex items-center justify-center mx-auto shrink-0 shadow-sm transition-transform duration-300 group-hover:scale-105`}>
+            <User className={`w-8 h-8 ${theme.avatarIcon}`} />
+          </div>
+
+          {/* Role Badge — locale-aware */}
+          <div className={`mt-3 text-[11px] font-bold px-3 py-0.5 rounded-full border max-w-[95%] mx-auto tracking-wide ${theme.badge}`}>
+            {isSi ? member.positionSi : member.positionEn}
+          </div>
+
+          {/* Name — locale-aware */}
+          <h4 className="mt-2 text-base font-bold text-slate-900 leading-snug group-hover:text-[#003399] transition-colors">
+            {isSi ? member.nameSi : member.nameEn}
+          </h4>
+
+          {/* Qualification Tag */}
+          <div className="mt-2 text-[11px] text-slate-600 bg-slate-50/80 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center justify-center gap-1.5 w-full">
+            <GraduationCap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="truncate font-medium">{member.qualification}</span>
+          </div>
         </div>
 
-        {/* Role Badge — locale-aware */}
-        <div className={`mt-2 text-[11px] font-semibold px-2.5 py-0.5 rounded-full max-w-[95%] mx-auto whitespace-normal ${
-          member.roleType === 'chairman' || member.roleType === 'vice_chairman'
-            ? 'bg-[#003399]/10 text-[#003399] border border-[#003399]/20'
-            : 'bg-slate-100 text-slate-700 border border-slate-200/60'
-        }`}>
-          {isSi ? member.positionSi : member.positionEn}
-        </div>
+        {/* Contact Action Footer */}
+        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-4 text-xs text-slate-500">
+          <a
+            href={`tel:${member.phone.replace(/\s+/g, '')}`}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-100 hover:text-slate-900 transition-all font-medium"
+            title={t('callTitle', { name: member.nameEn })}
+          >
+            <Phone className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{member.phone}</span>
+          </a>
 
-        {/* Name — locale-aware single language */}
-        <h4 className="mt-1.5 text-base font-semibold text-slate-900 leading-tight">
-          {isSi ? member.nameSi : member.nameEn}
-        </h4>
+          <span className="w-px h-3 bg-slate-200" />
 
-        {/* Qualification Tag */}
-        <div className="mt-1.5 text-[11px] text-slate-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 flex items-center justify-center gap-1 w-full">
-          <GraduationCap className="w-3 h-3 text-slate-400 shrink-0" />
-          <span className="truncate">{member.qualification}</span>
+          <a
+            href={`mailto:${member.email}`}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-100 hover:text-slate-900 transition-all font-medium"
+            title={t('emailTitle', { name: member.nameEn })}
+          >
+            <Mail className="w-3.5 h-3.5 text-[#003399]" />
+            <span>{member.email}</span>
+          </a>
         </div>
       </div>
-
-      {/* Slim Contact Footer */}
-      <div className="mt-3 py-2 px-3 border-t border-slate-100 bg-slate-50/50 -mx-4 -mb-4 rounded-b-xl flex items-center justify-center gap-3 text-[11px] text-slate-600">
-        <a
-          href={`tel:${member.phone.replace(/\s+/g, '')}`}
-          className="flex items-center gap-1 hover:text-slate-900 transition-colors"
-          title={t('callTitle', { name: member.nameEn })}
-        >
-          <Phone className="w-3 h-3 text-slate-500" />
-          <span>{member.phone}</span>
-        </a>
-
-        <span className="text-slate-300">•</span>
-
-        <a
-          href={`mailto:${member.email}`}
-          className="flex items-center gap-1 hover:text-slate-900 transition-colors"
-          title={t('emailTitle', { name: member.nameEn })}
-        >
-          <Mail className="w-3 h-3 text-slate-500" />
-          <span>{member.email}</span>
-        </a>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <section 
       id="director-board" 
-      className="w-full bg-slate-50 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 font-sans scroll-mt-20"
+      className="w-full bg-slate-50 pt-12 pb-10 sm:pt-16 sm:pb-12 px-4 sm:px-6 lg:px-8 font-sans scroll-mt-20"
     >
-      <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10">
+      <div className="max-w-6xl mx-auto space-y-10 sm:space-y-12">
 
-        {/* Centered Main Page Header */}
-        <div className="text-center max-w-3xl mx-auto mb-8 space-y-1.5 scroll-mt-28">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 flex items-center justify-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-slate-400" />
+        {/* Section Header with Co-op Rainbow Accent */}
+        <div className="text-center max-w-3xl mx-auto space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/70 text-xs font-bold uppercase tracking-wider text-[#003399]">
+            <Building2 className="w-3.5 h-3.5" />
             <span>{t('eyebrow')}</span>
-          </p>
+          </div>
 
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            {t('heading')} <span className="text-slate-400 font-normal">|</span> <span className="text-slate-500 font-normal">{t('headingSub')}</span>
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight pt-1">
+            {t('heading')}
           </h2>
 
-          <p className="text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
+          {/* Sri Lanka Co-op 7-Color Rainbow Micro-Ribbon under Title */}
+          <div className="h-1 w-20 mx-auto rounded-full bg-gradient-to-r from-[#DC2626] via-[#EA580C] via-[#EAB308] via-[#16A34A] via-[#0284C7] via-[#1D4ED8] to-[#9333EA] my-3" />
+
+          <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed pt-1">
             {t('subtext')}
           </p>
         </div>
 
         {/* 1. EXECUTIVE LEADERSHIP */}
-        <div className="space-y-4 max-w-5xl mx-auto w-full px-4 scroll-mt-28">
-          <div className="flex items-center justify-between w-full pb-2 border-b border-slate-200/80">
-            <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-800 uppercase">
-              {t('execTier')}
-            </h3>
-            <span className="text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80 px-2.5 py-0.5 rounded-full">
+        <div className="space-y-4 max-w-5xl mx-auto w-full">
+          <div className="flex items-center justify-between w-full pb-2.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#003399]" />
+              <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-900 uppercase">
+                {t('execTier')}
+              </h3>
+            </div>
+            <span className="text-xs font-bold bg-blue-50 text-[#003399] border border-blue-200/80 px-3 py-0.5 rounded-full">
               {t('execCount', { count: 2 })}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-center max-w-3xl mx-auto w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 justify-center max-w-3xl mx-auto w-full">
             {chairman && renderCard(chairman)}
             {viceChairman && renderCard(viceChairman)}
           </div>
         </div>
 
         {/* 2. BOARD DIRECTORS */}
-        <div className="space-y-4 max-w-5xl mx-auto w-full px-4 scroll-mt-28">
-          <div className="flex items-center justify-between w-full pb-2 border-b border-slate-200/80">
-            <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-800 uppercase">
-              {t('directorTier')}
-            </h3>
-            <span className="text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80 px-2.5 py-0.5 rounded-full">
+        <div className="space-y-4 max-w-5xl mx-auto w-full">
+          <div className="flex items-center justify-between w-full pb-2.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
+              <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-900 uppercase">
+                {t('directorTier')}
+              </h3>
+            </div>
+            <span className="text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-3 py-0.5 rounded-full">
               {t('directorCount', { count: directors.length })}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto w-full">
             {directors.map(renderCard)}
           </div>
         </div>
 
         {/* 3. ADMINISTRATIVE OFFICERS */}
-        <div className="space-y-4 max-w-5xl mx-auto w-full px-4 scroll-mt-28">
-          <div className="flex items-center justify-between w-full pb-2 border-b border-slate-200/80">
-            <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-800 uppercase">
-              {t('officerTier')}
-            </h3>
-            <span className="text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80 px-2.5 py-0.5 rounded-full">
+        <div className="space-y-4 max-w-5xl mx-auto w-full">
+          <div className="flex items-center justify-between w-full pb-2.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-sky-600" />
+              <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-900 uppercase">
+                {t('officerTier')}
+              </h3>
+            </div>
+            <span className="text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200/80 px-3 py-0.5 rounded-full">
               {t('officerCount', { count: officers.length })}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-center max-w-3xl mx-auto w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 justify-center max-w-3xl mx-auto w-full">
             {officers.map(renderCard)}
           </div>
         </div>
