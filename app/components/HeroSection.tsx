@@ -37,12 +37,17 @@ export default function HeroSection() {
         </div>
 
         {/* Hero Title with Solid White Clean Color */}
-        <h1 className="font-condensed text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] max-w-4xl mb-5">
+        <h1 className="font-condensed text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15] max-w-4xl mb-3 sm:mb-4">
           {t('titlePrefix')} {t('titleHighlight')}
         </h1>
 
-        {/* Hero Tagline */}
-        <p className="text-sm sm:text-base md:text-lg text-slate-200 max-w-2xl mx-auto font-normal leading-relaxed mb-8">
+        {/* Hero Subtitle / Slogan */}
+        <p className="text-base sm:text-lg md:text-xl font-medium text-slate-100 max-w-2xl mx-auto mb-3 tracking-normal">
+          {t('subtitle')}
+        </p>
+
+        {/* Hero Tagline / Description */}
+        <p className="text-xs sm:text-sm md:text-base text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed mb-8">
           {t('description')}
         </p>
 
