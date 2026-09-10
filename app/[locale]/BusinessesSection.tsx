@@ -57,7 +57,7 @@ export const businessesData: BusinessService[] = [
     manager: 'කේ ඩබ් ජදසිංහ (Manager)',
     location: 'සමිති ගොඩනැගිල්ල, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1012',
-    imageSrc: '/images/sections/rural-bank.jpg',
+    imageSrc: '/images/sections/rural-bank.png',
   },
   {
     key: 'consumer',
@@ -86,7 +86,7 @@ export const businessesData: BusinessService[] = [
     manager: 'එස් එම් රණසිංහ (Manager)',
     location: 'පාරිභෝගික අංශය, සමිති ගොඩනැගිල්ල, හැට්ටිපොල',
     hotline: '037 229 1013',
-    imageSrc: '/images/sections/consumer.jpg',
+    imageSrc: '/images/sections/consumer.png',
   },
   {
     key: 'maliban-biscuits',
@@ -115,7 +115,7 @@ export const businessesData: BusinessService[] = [
     manager: 'ඩබ් පී සිල්වා (Manager)',
     location: 'නියෝජිතායතන ගබදාව, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1014',
-    imageSrc: '/images/sections/maliban-biscuits.jpg',
+    imageSrc: '/images/sections/maliban-biscuits.png',
   },
   {
     key: 'maliban-kiri',
@@ -144,7 +144,7 @@ export const businessesData: BusinessService[] = [
     manager: 'ඒ එල් පෙරේරා (Manager)',
     location: 'නියෝජිතායතන ගබදාව, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1015',
-    imageSrc: '/images/sections/maliban-kiri.jpg',
+    imageSrc: '/images/sections/maliban-kiri.png',
   },
   {
     key: 'nature-secrets',
@@ -173,7 +173,7 @@ export const businessesData: BusinessService[] = [
     manager: 'එම් ඩබ් ප්‍රනාන්දු (Manager)',
     location: 'ප්‍රධාන කාර්යාලය, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1016',
-    imageSrc: '/images/sections/nature-secrets.jpg',
+    imageSrc: '/images/sections/nature-secrets.png',
   },
   {
     key: 'hemas',
@@ -202,7 +202,7 @@ export const businessesData: BusinessService[] = [
     manager: 'බී ජී කුමාරි (Manager)',
     location: 'ප්‍රධාන කාර්යාලය, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1017',
-    imageSrc: '/images/sections/hemas.jpg',
+    imageSrc: '/images/sections/hemas.png',
   },
   {
     key: 'ristbury-tiara',
@@ -229,7 +229,7 @@ export const businessesData: BusinessService[] = [
     manager: 'ඩී එස් රත්නායක (Manager)',
     location: 'නියෝජිතායතන ගබදාව, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1018',
-    imageSrc: '/images/sections/ristbury-tiara.jpg',
+    imageSrc: '/images/sections/ristbury-tiara.png',
   },
   {
     key: 'fuel-station',
@@ -256,7 +256,7 @@ export const businessesData: BusinessService[] = [
     manager: 'එච් එම් බණ්ඩාර (Manager)',
     location: 'කුරුණෑගල පාර හංදිය, හැට්ටිපොල',
     hotline: '037 229 1019',
-    imageSrc: '/images/sections/fuel-station.jpg',
+    imageSrc: '/images/sections/fuel-station.png',
   },
   {
     key: 'funeral',
@@ -281,7 +281,7 @@ export const businessesData: BusinessService[] = [
     manager: 'ටී එම් විජේසිංහ (Manager)',
     location: 'සමිති ගොඩනැගිල්ල, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1020',
-    imageSrc: '/images/sections/funeral.jpg',
+    imageSrc: '/images/sections/funeral.png',
   },
 ];
 
@@ -374,8 +374,8 @@ export default function BusinessesSection() {
                   </div>
 
                   <div className="flex items-start gap-3.5 mb-3.5">
-                    {/* Consistent Logo Badge Container with Ambient Glow */}
-                    <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-200/80 p-2 flex items-center justify-center shrink-0 shadow-xs relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                    {/* Consistent Logo Badge Container */}
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-neutral-200/80 p-1.5 flex items-center justify-center shrink-0 shadow-xs relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
                       <Image
                         src={item.imageSrc}
                         alt={item.titleEn}
@@ -432,7 +432,7 @@ export default function BusinessesSection() {
               {/* Fixed Modal Header */}
               <div className="px-6 sm:px-8 pt-6 pb-5 border-b border-neutral-200/80 shrink-0 flex items-start justify-between gap-4 bg-white">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-50 border border-neutral-200/80 p-2.5 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white border border-neutral-200/80 p-2 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
                     <Image
                       src={selectedBusiness.imageSrc}
                       alt={selectedBusiness.titleEn}
