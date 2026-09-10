@@ -1,7 +1,7 @@
 import HeroSection from '@/app/components/HeroSection';
-import BoardSection from '@/app/[locale]/BoardSection';
-import AboutSection from '@/app/[locale]/AboutSection';
-import BusinessesSection from '@/app/[locale]/BusinessesSection';
+import BoardSection from '@/app/components/BoardSection';
+import AboutSection from '@/app/components/AboutSection';
+import BusinessesSection from '@/app/components/BusinessesSection';
 
 export default function Home() {
 
