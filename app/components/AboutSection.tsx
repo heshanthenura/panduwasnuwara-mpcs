@@ -17,13 +17,16 @@ export default function AboutSection() {
           {/* Left Column Card: Main Narrative & Core Principles */}
           <div className="lg:col-span-7 bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 border border-neutral-200/80 shadow-xs flex flex-col justify-between">
             <div>
-              {/* Eyebrow */}
-              <span className="block text-sm sm:text-[15px] font-bold text-[#0284c7] tracking-normal mb-2.5 sm:mb-3">
-                {t('eyebrow')}
-              </span>
+              {/* Section Header / Eyebrow */}
+              <div className="flex items-center gap-2.5 mb-3 sm:mb-4">
+                <span className="w-1.5 h-4 sm:h-5 bg-[#003399] rounded-full shrink-0" />
+                <span className="text-base sm:text-lg font-bold text-[#003399] tracking-normal">
+                  {t('eyebrow')}
+                </span>
+              </div>
 
               {/* Main Headline */}
-              <h2 className="font-condensed font-bold sm:font-extrabold text-2xl sm:text-3xl lg:text-[34px] xl:text-[38px] text-neutral-900 leading-[1.18] tracking-tight mb-5 sm:mb-6">
+              <h2 className="font-condensed font-bold sm:font-extrabold text-2xl sm:text-3xl lg:text-4xl xl:text-[42px] text-neutral-900 leading-snug sm:leading-[1.25] tracking-tight mb-5 sm:mb-6">
                 {t('heading')}
               </h2>
 

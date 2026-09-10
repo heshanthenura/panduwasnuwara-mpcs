@@ -357,7 +357,7 @@ export default function BusinessesSection() {
 
         {/* 1. Responsive 3-Column Grid */}
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {businessesData.map((item) => {
+          {businessesData.map((item, index) => {
             const theme = getCategoryTheme(item.key);
 
             return (
@@ -366,10 +366,13 @@ export default function BusinessesSection() {
                 className="group p-6 sm:p-7 rounded-2xl sm:rounded-3xl border border-neutral-200/80 bg-white shadow-xs hover:shadow-md hover:border-neutral-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
-                  {/* Category Pill & Top Baseline Alignment */}
+                  {/* Category Pill & Top Baseline Alignment with Gray Number */}
                   <div className="flex items-center justify-between gap-2 mb-3.5">
                     <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-700 border-slate-200">
                       {isSi ? theme.categorySi : theme.category}
+                    </span>
+                    <span className="font-mono text-xs sm:text-sm font-semibold text-neutral-400 select-none tracking-wider">
+                      {String(index + 1).padStart(2, '0')}
                     </span>
                   </div>
 
