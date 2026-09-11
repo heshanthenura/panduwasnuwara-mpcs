@@ -2,6 +2,7 @@ import HeroSection from '@/app/components/HeroSection';
 import BoardSection from '@/app/components/BoardSection';
 import AboutSection from '@/app/components/AboutSection';
 import BusinessesSection from '@/app/components/BusinessesSection';
+import GallerySection from '@/app/components/GallerySection';
 
 export default function Home() {
 
@@ -11,6 +12,7 @@ export default function Home() {
       <BoardSection />
       <AboutSection />
       <BusinessesSection />
+      <GallerySection />
     </div>
   );
 }
