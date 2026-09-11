@@ -136,58 +136,29 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
   const officers = members.filter(m => m.roleType === 'officer');
 
   const renderCard = (member: BoardMember) => {
-    const isExec = member.roleType === 'chairman' || member.roleType === 'vice_chairman';
-    const isDirector = member.roleType === 'director';
-    const isOfficer = member.roleType === 'officer';
-
-    // Theme tokens based on Co-op logo hierarchy
-    const theme = isExec
-      ? {
-          topBorder: 'border-t-4 border-t-[#003399]',
-          badge: 'bg-blue-50 text-[#003399] border-blue-200/80',
-          avatarRing: 'ring-2 ring-amber-400/50 bg-gradient-to-br from-amber-50 via-white to-blue-50',
-          avatarIcon: 'text-[#003399]',
-          glow: 'group-hover:border-amber-400/40',
-        }
-      : isDirector
-      ? {
-          topBorder: 'border-t-4 border-t-emerald-600',
-          badge: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
-          avatarRing: 'ring-2 ring-emerald-300/50 bg-gradient-to-br from-emerald-50 via-white to-slate-50',
-          avatarIcon: 'text-emerald-700',
-          glow: 'group-hover:border-emerald-300',
-        }
-      : {
-          topBorder: 'border-t-4 border-t-sky-600',
-          badge: 'bg-sky-50 text-sky-800 border-sky-200/80',
-          avatarRing: 'ring-2 ring-sky-300/50 bg-gradient-to-br from-sky-50 via-white to-slate-50',
-          avatarIcon: 'text-sky-700',
-          glow: 'group-hover:border-sky-300',
-        };
-
     return (
       <div 
         key={member.id}
-        className={`group bg-white rounded-2xl border border-slate-200/80 ${theme.topBorder} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 pt-6 pb-4 px-5 flex flex-col justify-between overflow-hidden text-center relative`}
+        className="group bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/80 shadow-xs hover:shadow-md hover:border-neutral-300 hover:-translate-y-0.5 transition-all duration-300 pt-6 pb-5 px-5 flex flex-col justify-between overflow-hidden text-center relative"
       >
         <div className="flex flex-col items-center text-center w-full">
-          {/* Avatar Icon with Tier Ring & Warm Gradient */}
-          <div className={`w-16 h-16 rounded-2xl ${theme.avatarRing} flex items-center justify-center mx-auto shrink-0 shadow-sm transition-transform duration-300 group-hover:scale-105`}>
-            <User className={`w-8 h-8 ${theme.avatarIcon}`} />
+          {/* Avatar Icon with Professional Neutral Gray Frame */}
+          <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-neutral-200/90 flex items-center justify-center mx-auto shrink-0 shadow-xs group-hover:border-neutral-300 group-hover:bg-slate-100/80 transition-all duration-300">
+            <User className="w-8 h-8 text-neutral-500 group-hover:text-neutral-800 transition-colors" />
           </div>
 
           {/* Role Badge — locale-aware */}
-          <div className={`mt-3 text-[11px] font-bold px-3 py-0.5 rounded-full border max-w-[95%] mx-auto tracking-wide ${theme.badge}`}>
+          <div className="mt-3 text-[11px] font-bold px-3 py-0.5 rounded-full border border-slate-200 bg-slate-100 text-slate-700 max-w-[95%] mx-auto tracking-wide">
             {isSi ? member.positionSi : member.positionEn}
           </div>
 
           {/* Name — locale-aware */}
-          <h4 className="mt-2 text-base font-bold text-slate-900 leading-snug group-hover:text-[#003399] transition-colors">
+          <h4 className="mt-2 text-base font-bold text-neutral-900 leading-snug group-hover:text-[#003399] transition-colors">
             {isSi ? member.nameSi : member.nameEn}
           </h4>
 
           {/* Qualification Tag */}
-          <div className="mt-2 text-[11px] text-slate-600 bg-slate-50/80 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center justify-center gap-1.5 w-full">
+          <div className="mt-2 text-[11px] text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 flex items-center justify-center gap-1.5 w-full">
             <GraduationCap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="truncate font-medium">{member.qualification}</span>
           </div>
@@ -222,39 +193,36 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
   return (
     <section 
       id="director-board" 
-      className="w-full bg-slate-50 pt-12 pb-10 sm:pt-16 sm:pb-12 px-4 sm:px-6 lg:px-8 font-sans scroll-mt-20"
+      className="w-full bg-[#FAFAFA] pt-12 pb-10 sm:pt-16 sm:pb-12 px-4 sm:px-6 lg:px-8 font-sans scroll-mt-20"
     >
       <div className="max-w-6xl mx-auto space-y-10 sm:space-y-12">
 
         {/* Section Header with Co-op Rainbow Accent */}
         <div className="text-center max-w-3xl mx-auto space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/70 text-xs font-bold uppercase tracking-wider text-[#003399]">
-            <Building2 className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-800">
+            <Building2 className="w-3.5 h-3.5 text-slate-700" />
             <span>{t('eyebrow')}</span>
           </div>
 
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight pt-1">
+          <h2 className="font-condensed text-2xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight pt-1">
             {t('heading')}
           </h2>
 
-          {/* Sri Lanka Co-op 7-Color Rainbow Micro-Ribbon under Title */}
-          <div className="h-1 w-20 mx-auto rounded-full bg-gradient-to-r from-[#DC2626] via-[#EA580C] via-[#EAB308] via-[#16A34A] via-[#0284C7] via-[#1D4ED8] to-[#9333EA] my-3" />
-
-          <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed pt-1">
+          <p className="text-sm sm:text-base text-neutral-600 max-w-xl mx-auto leading-relaxed pt-1">
             {t('subtext')}
           </p>
         </div>
 
         {/* 1. EXECUTIVE LEADERSHIP */}
-        <div className="space-y-4 max-w-5xl mx-auto w-full">
-          <div className="flex items-center justify-between w-full pb-2.5 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#003399]" />
-              <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-900 uppercase">
+        <div className="space-y-5 max-w-5xl mx-auto w-full">
+          <div className="flex items-center justify-between w-full pb-3 border-b border-neutral-300">
+            <div className="flex items-center gap-2.5">
+              <span className="w-1.5 h-4 sm:h-5 bg-neutral-900 rounded-full" />
+              <h3 className="font-condensed text-base sm:text-lg font-bold text-neutral-900 tracking-tight">
                 {t('execTier')}
               </h3>
             </div>
-            <span className="text-xs font-bold bg-blue-50 text-[#003399] border border-blue-200/80 px-3 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-neutral-600 bg-white border border-neutral-200/90 px-3 py-1 rounded-full shadow-2xs">
               {t('execCount', { count: 2 })}
             </span>
           </div>
@@ -266,15 +234,15 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
         </div>
 
         {/* 2. BOARD DIRECTORS */}
-        <div className="space-y-4 max-w-5xl mx-auto w-full">
-          <div className="flex items-center justify-between w-full pb-2.5 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-              <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-900 uppercase">
+        <div className="space-y-5 max-w-5xl mx-auto w-full">
+          <div className="flex items-center justify-between w-full pb-3 border-b border-neutral-300">
+            <div className="flex items-center gap-2.5">
+              <span className="w-1.5 h-4 sm:h-5 bg-neutral-900 rounded-full" />
+              <h3 className="font-condensed text-base sm:text-lg font-bold text-neutral-900 tracking-tight">
                 {t('directorTier')}
               </h3>
             </div>
-            <span className="text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-3 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-neutral-600 bg-white border border-neutral-200/90 px-3 py-1 rounded-full shadow-2xs">
               {t('directorCount', { count: directors.length })}
             </span>
           </div>
@@ -285,15 +253,15 @@ export default function BoardSection({ members = boardMembersData }: BoardSectio
         </div>
 
         {/* 3. ADMINISTRATIVE OFFICERS */}
-        <div className="space-y-4 max-w-5xl mx-auto w-full">
-          <div className="flex items-center justify-between w-full pb-2.5 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-sky-600" />
-              <h3 className="text-xs sm:text-sm font-bold tracking-wider text-slate-900 uppercase">
+        <div className="space-y-5 max-w-5xl mx-auto w-full">
+          <div className="flex items-center justify-between w-full pb-3 border-b border-neutral-300">
+            <div className="flex items-center gap-2.5">
+              <span className="w-1.5 h-4 sm:h-5 bg-neutral-900 rounded-full" />
+              <h3 className="font-condensed text-base sm:text-lg font-bold text-neutral-900 tracking-tight">
                 {t('officerTier')}
               </h3>
             </div>
-            <span className="text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200/80 px-3 py-0.5 rounded-full">
+            <span className="text-xs font-semibold text-neutral-600 bg-white border border-neutral-200/90 px-3 py-1 rounded-full shadow-2xs">
               {t('officerCount', { count: officers.length })}
             </span>
           </div>
