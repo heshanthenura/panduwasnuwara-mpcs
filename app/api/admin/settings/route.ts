@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRecoveryWhatsAppNumber, setSetting } from '@/lib/models/setting';
+import { getYearsOfService, setYearsOfService } from '@/lib/models/stats';
 
 function isAdmin(req: NextRequest): boolean {
   const token = req.cookies.get('mpcs_admin_token')?.value || req.cookies.get('mpcs_auth_token')?.value;
@@ -15,7 +16,14 @@ function isAdmin(req: NextRequest): boolean {
 export async function GET() {
   try {
     const recoveryWhatsAppNumber = await getRecoveryWhatsAppNumber();
-    return NextResponse.json({ success: true, settings: { recoveryWhatsAppNumber } });
+    const yearsOfService = await getYearsOfService();
+    return NextResponse.json({
+      success: true,
+      settings: {
+        recoveryWhatsAppNumber,
+        yearsOfService
+      }
+    });
   } catch (err) {
     console.error('Error fetching settings:', err);
     return NextResponse.json({ success: false, error: 'Failed to fetch settings' }, { status: 500 });
@@ -29,12 +37,16 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { recoveryWhatsAppNumber } = body;
+    const { recoveryWhatsAppNumber, yearsOfService } = body;
 
     if (recoveryWhatsAppNumber !== undefined) {
       // Strip non-digit characters except leading plus
       const cleaned = recoveryWhatsAppNumber.replace(/[^0-9]/g, '');
       await setSetting('recovery_whatsapp_number', cleaned);
+    }
+
+    if (yearsOfService !== undefined) {
+      await setYearsOfService(yearsOfService);
     }
 
     return NextResponse.json({ success: true, message: 'Settings updated successfully' });
