@@ -92,7 +92,7 @@ export default function GallerySection() {
         setActivePost(updated);
       }
     }
-  }, [posts]);
+  }, [posts, activePost]);
 
   const handleToggleLike = async (post: GalleryPost, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
