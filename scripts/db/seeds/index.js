@@ -2,6 +2,7 @@ const { seedUsers } = require('./users');
 const { seedSettings } = require('./settings');
 const { seedGallery } = require('./gallery');
 const { seedBusinesses } = require('./businesses');
+const { seedNews } = require('./news');
 
 async function runAllSeeds(client) {
   console.log('Running database seeds...');
@@ -9,6 +10,7 @@ async function runAllSeeds(client) {
   await seedSettings(client);
   await seedGallery(client);
   await seedBusinesses(client);
+  await seedNews(client);
   console.log('✓ Database seeds completed successfully.');
 }
 
@@ -17,5 +19,7 @@ module.exports = {
   seedUsers,
   seedSettings,
   seedGallery,
-  seedBusinesses
+  seedBusinesses,
+  seedNews
 };
+
