@@ -1,7 +1,9 @@
 import HeroSection from '@/app/components/HeroSection';
-import BoardSection from '@/app/[locale]/BoardSection';
-import AboutSection from '@/app/[locale]/AboutSection';
-import BusinessesSection from '@/app/[locale]/BusinessesSection';
+import BoardSection from '@/app/components/BoardSection';
+import AboutSection from '@/app/components/AboutSection';
+import BusinessesSection from '@/app/components/BusinessesSection';
+import GallerySection from '@/app/components/GallerySection';
+import NewsSection from '@/app/components/NewsSection';
 
 export default function Home() {
 
@@ -11,6 +13,8 @@ export default function Home() {
       <BoardSection />
       <AboutSection />
       <BusinessesSection />
+      <GallerySection />
+      <NewsSection />
     </div>
   );
 }

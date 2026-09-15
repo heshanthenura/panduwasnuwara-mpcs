@@ -57,7 +57,7 @@ export const businessesData: BusinessService[] = [
     manager: 'කේ ඩබ් ජදසිංහ (Manager)',
     location: 'සමිති ගොඩනැගිල්ල, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1012',
-    imageSrc: '/images/sections/rural-bank.jpg',
+    imageSrc: '/images/sections/rural-bank.png',
   },
   {
     key: 'consumer',
@@ -86,7 +86,7 @@ export const businessesData: BusinessService[] = [
     manager: 'එස් එම් රණසිංහ (Manager)',
     location: 'පාරිභෝගික අංශය, සමිති ගොඩනැගිල්ල, හැට්ටිපොල',
     hotline: '037 229 1013',
-    imageSrc: '/images/sections/consumer.jpg',
+    imageSrc: '/images/sections/consumer.png',
   },
   {
     key: 'maliban-biscuits',
@@ -115,7 +115,7 @@ export const businessesData: BusinessService[] = [
     manager: 'ඩබ් පී සිල්වා (Manager)',
     location: 'නියෝජිතායතන ගබදාව, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1014',
-    imageSrc: '/images/sections/maliban-biscuits.jpg',
+    imageSrc: '/images/sections/maliban-biscuits.png',
   },
   {
     key: 'maliban-kiri',
@@ -144,7 +144,7 @@ export const businessesData: BusinessService[] = [
     manager: 'ඒ එල් පෙරේරා (Manager)',
     location: 'නියෝජිතායතන ගබදාව, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1015',
-    imageSrc: '/images/sections/maliban-kiri.jpg',
+    imageSrc: '/images/sections/maliban-kiri.png',
   },
   {
     key: 'nature-secrets',
@@ -173,7 +173,7 @@ export const businessesData: BusinessService[] = [
     manager: 'එම් ඩබ් ප්‍රනාන්දු (Manager)',
     location: 'ප්‍රධාන කාර්යාලය, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1016',
-    imageSrc: '/images/sections/nature-secrets.jpg',
+    imageSrc: '/images/sections/nature-secrets.png',
   },
   {
     key: 'hemas',
@@ -202,7 +202,7 @@ export const businessesData: BusinessService[] = [
     manager: 'බී ජී කුමාරි (Manager)',
     location: 'ප්‍රධාන කාර්යාලය, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1017',
-    imageSrc: '/images/sections/hemas.jpg',
+    imageSrc: '/images/sections/hemas.png',
   },
   {
     key: 'ristbury-tiara',
@@ -229,7 +229,7 @@ export const businessesData: BusinessService[] = [
     manager: 'ඩී එස් රත්නායක (Manager)',
     location: 'නියෝජිතායතන ගබදාව, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1018',
-    imageSrc: '/images/sections/ristbury-tiara.jpg',
+    imageSrc: '/images/sections/ristbury-tiara.png',
   },
   {
     key: 'fuel-station',
@@ -256,7 +256,7 @@ export const businessesData: BusinessService[] = [
     manager: 'එච් එම් බණ්ඩාර (Manager)',
     location: 'කුරුණෑගල පාර හංදිය, හැට්ටිපොල',
     hotline: '037 229 1019',
-    imageSrc: '/images/sections/fuel-station.jpg',
+    imageSrc: '/images/sections/fuel-station.png',
   },
   {
     key: 'funeral',
@@ -281,7 +281,7 @@ export const businessesData: BusinessService[] = [
     manager: 'ටී එම් විජේසිංහ (Manager)',
     location: 'සමිති ගොඩනැගිල්ල, කුරුණෑගල පාර, හැට්ටිපොල',
     hotline: '037 229 1020',
-    imageSrc: '/images/sections/funeral.jpg',
+    imageSrc: '/images/sections/funeral.png',
   },
 ];
 
@@ -291,51 +291,41 @@ export default function BusinessesSection() {
   const isSi = locale === 'si';
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessService | null>(null);
 
-  // Color mapping matching Sri Lanka Co-op identity
+  // Category details
   const getCategoryTheme = (key: string) => {
     switch (key) {
       case 'rural-bank':
         return {
-          topBorder: 'border-t-4 border-t-[#003399]',
-          badge: 'bg-blue-50 text-[#003399] border-blue-200/80',
-          hoverBorder: 'hover:border-blue-400',
           category: 'Banking & Finance',
           categorySi: 'ග්‍රාමීය බැංකු සේවා'
         };
+      case 'consumer':
       case 'coop-city':
       case 'mini-super':
         return {
-          topBorder: 'border-t-4 border-t-emerald-600',
-          badge: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
-          hoverBorder: 'hover:border-emerald-400',
           category: 'Retail & Consumer',
           categorySi: 'පාරිභෝගික වෙළඳසැල්'
         };
       case 'fuel-station':
         return {
-          topBorder: 'border-t-4 border-t-amber-500',
-          badge: 'bg-amber-50 text-amber-800 border-amber-200/80',
-          hoverBorder: 'hover:border-amber-400',
           category: 'Energy & Fuel',
           categorySi: 'ඉන්ධන සැපයුම'
         };
       case 'nestle-agency':
       case 'prima-agency':
       case 'ristbury-tiara':
+      case 'maliban-biscuits':
+      case 'maliban-kiri':
+      case 'nature-secrets':
+      case 'hemas':
       case 'tobacco-agency':
         return {
-          topBorder: 'border-t-4 border-t-sky-600',
-          badge: 'bg-sky-50 text-sky-800 border-sky-200/80',
-          hoverBorder: 'hover:border-sky-400',
           category: 'Commercial Distribution',
           categorySi: 'වාණිජ නියෝජිතායතන'
         };
       case 'funeral':
       default:
         return {
-          topBorder: 'border-t-4 border-t-purple-600',
-          badge: 'bg-purple-50 text-purple-800 border-purple-200/80',
-          hoverBorder: 'hover:border-purple-400',
           category: 'Community Welfare',
           categorySi: 'ප්‍රජා සත්කාර සේවා'
         };
@@ -345,50 +335,50 @@ export default function BusinessesSection() {
   return (
     <section 
       id="businesses-services" 
-      className="w-full bg-slate-50 pt-10 pb-16 sm:pt-12 sm:pb-20 px-4 sm:px-6 lg:px-8 font-sans scroll-mt-20"
+      className="w-full bg-[#FAFAFA] pt-10 pb-16 sm:pt-12 sm:pb-20 px-4 sm:px-6 lg:px-8 font-sans scroll-mt-20"
     >
       <div className="max-w-6xl mx-auto space-y-10 sm:space-y-12">
 
         {/* Section Header with Co-op Rainbow Accent */}
         <div className="text-center space-y-2 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/70 text-xs font-bold uppercase tracking-wider text-amber-800">
-            <Building2 className="w-3.5 h-3.5 text-amber-700" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-800">
+            <Building2 className="w-3.5 h-3.5 text-slate-700" />
             <span>{t('eyebrow')}</span>
           </div>
 
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight pt-1">
+          <h2 className="font-condensed text-2xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight pt-1">
             {t('heading')}
           </h2>
 
-          {/* Sri Lanka Co-op 7-Color Rainbow Micro-Ribbon under Title */}
-          <div className="h-1 w-20 mx-auto rounded-full bg-gradient-to-r from-[#DC2626] via-[#EA580C] via-[#EAB308] via-[#16A34A] via-[#0284C7] via-[#1D4ED8] to-[#9333EA] my-3" />
-
-          <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto leading-relaxed pt-1">
+          <p className="text-sm sm:text-base text-neutral-600 max-w-xl mx-auto leading-relaxed pt-1">
             {t('subtext')}
           </p>
         </div>
 
         {/* 1. Responsive 3-Column Grid */}
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {businessesData.map((item) => {
+          {businessesData.map((item, index) => {
             const theme = getCategoryTheme(item.key);
 
             return (
               <div
                 key={item.key}
-                className={`group p-6 rounded-2xl border border-slate-200/80 ${theme.topBorder} bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 ${theme.hoverBorder} transition-all duration-300 flex flex-col justify-between`}
+                className="group p-6 sm:p-7 rounded-2xl sm:rounded-3xl border border-neutral-200/80 bg-white shadow-xs hover:shadow-md hover:border-neutral-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
-                  {/* Category Pill & Top Baseline Alignment */}
+                  {/* Category Pill & Top Baseline Alignment with Gray Number */}
                   <div className="flex items-center justify-between gap-2 mb-3.5">
-                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${theme.badge}`}>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-700 border-slate-200">
                       {isSi ? theme.categorySi : theme.category}
+                    </span>
+                    <span className="font-mono text-xs sm:text-sm font-semibold text-neutral-400 select-none tracking-wider">
+                      {String(index + 1).padStart(2, '0')}
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3.5 mb-3.5">
-                    {/* Consistent Logo Badge Container with Ambient Glow */}
-                    <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-200/80 p-2 flex items-center justify-center shrink-0 shadow-xs relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                    {/* Consistent Logo Badge Container */}
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-neutral-200/80 p-1.5 flex items-center justify-center shrink-0 shadow-xs relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
                       <Image
                         src={item.imageSrc}
                         alt={item.titleEn}
@@ -439,16 +429,13 @@ export default function BusinessesSection() {
 
         {/* Detail Modal / Pop-up Dialog */}
         {selectedBusiness && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden relative animate-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden relative animate-in zoom-in-95 duration-200">
               
-              {/* Co-op Rainbow Top Accent Ribbon */}
-              <div className="w-full h-1.5 bg-gradient-to-r from-[#DC2626] via-[#EA580C] via-[#EAB308] via-[#16A34A] via-[#0284C7] via-[#1D4ED8] to-[#9333EA] shrink-0" />
-
               {/* Fixed Modal Header */}
-              <div className="px-6 sm:px-8 pt-5 pb-4 border-b border-slate-100 shrink-0 flex items-start justify-between gap-4 bg-white">
+              <div className="px-6 sm:px-8 pt-6 pb-5 border-b border-neutral-200/80 shrink-0 flex items-start justify-between gap-4 bg-white">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-50 border border-slate-200/80 p-2 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white border border-neutral-200/80 p-2 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
                     <Image
                       src={selectedBusiness.imageSrc}
                       alt={selectedBusiness.titleEn}
@@ -457,11 +444,11 @@ export default function BusinessesSection() {
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  <div className="space-y-0.5">
-                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
+                  <div className="space-y-1">
+                    <h3 className="font-condensed text-xl sm:text-2xl font-bold text-neutral-900 leading-snug">
                       {isSi ? selectedBusiness.titleSi : selectedBusiness.titleEn}
                     </h3>
-                    <p className="text-xs sm:text-sm font-semibold text-[#003399]">
+                    <p className="text-xs sm:text-sm text-neutral-500 font-medium">
                       {isSi ? selectedBusiness.taglineSi : selectedBusiness.taglineEn}
                     </p>
                   </div>
@@ -470,19 +457,19 @@ export default function BusinessesSection() {
                 {/* Close Button */}
                 <button
                   onClick={() => setSelectedBusiness(null)}
-                  className="p-2 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors cursor-pointer shrink-0"
+                  className="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer shrink-0"
                   aria-label="Close modal"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Scrollable Content Body with Custom Sleek Scrollbar */}
-              <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-8 py-5 space-y-5 custom-scrollbar">
+              <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-8 py-6 space-y-6 custom-scrollbar">
                 {/* Full Description */}
                 {(isSi ? selectedBusiness.descriptionSi : selectedBusiness.descriptionEn) && (
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-                    <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+                  <div className="bg-slate-50/80 p-5 rounded-2xl border border-neutral-200/80">
+                    <p className="text-sm sm:text-[15px] text-neutral-600 leading-relaxed font-normal">
                       {isSi ? selectedBusiness.descriptionSi : selectedBusiness.descriptionEn}
                     </p>
                   </div>
@@ -490,7 +477,7 @@ export default function BusinessesSection() {
 
                 {/* Offered Services List */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <h4 className="font-condensed text-xs font-bold uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>{t('offeredServices')}</span>
                   </h4>
@@ -499,7 +486,7 @@ export default function BusinessesSection() {
                     {(isSi ? selectedBusiness.services : selectedBusiness.servicesEn).map((svc, idx) => (
                       <div 
                         key={idx}
-                        className="flex items-center gap-2.5 text-xs text-slate-800 bg-emerald-50/40 px-3.5 py-2.5 rounded-xl border border-emerald-100/80 font-medium"
+                        className="flex items-center gap-2.5 text-xs sm:text-[13px] text-neutral-700 bg-slate-50 border border-neutral-200/80 px-3.5 py-2.5 rounded-xl font-medium"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                         <span>{svc}</span>
@@ -509,33 +496,33 @@ export default function BusinessesSection() {
                 </div>
 
                 {/* Key Contact & Location Details */}
-                <div className="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600">
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                    <UserCheck className="w-4 h-4 text-[#003399] shrink-0" />
+                <div className="pt-2 border-t border-neutral-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-neutral-600">
+                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 border border-neutral-200/80">
+                    <UserCheck className="w-4 h-4 text-neutral-700 shrink-0" />
                     <div className="truncate">
-                      <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('manager')}</span>
-                      <span className="font-semibold text-slate-800 truncate block">{selectedBusiness.manager}</span>
+                      <span className="block text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{t('manager')}</span>
+                      <span className="font-semibold text-neutral-800 truncate block mt-0.5">{selectedBusiness.manager}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                    <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-neutral-200/80">
+                    <MapPin className="w-4 h-4 text-neutral-700 shrink-0 mt-0.5" />
                     <div>
-                      <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('location')}</span>
-                      <span className="font-semibold text-slate-800 block">{selectedBusiness.location}</span>
+                      <span className="block text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{t('location')}</span>
+                      <span className="font-semibold text-neutral-800 block mt-0.5">{selectedBusiness.location}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Fixed Bottom Action Bar */}
-              <div className="px-6 sm:px-8 py-3.5 bg-slate-50 border-t border-slate-200/80 shrink-0 flex items-center justify-between rounded-b-3xl">
+              <div className="px-6 sm:px-8 py-4 bg-slate-50 border-t border-neutral-200/80 shrink-0 flex items-center justify-between rounded-b-2xl sm:rounded-b-3xl">
                 <div className="flex items-center gap-2 text-xs">
                   <Phone className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span className="text-slate-500 font-medium">{t('hotline')}:</span>
+                  <span className="text-neutral-500 font-medium">{t('hotline')}:</span>
                   <a 
                     href={`tel:${selectedBusiness.hotline.replace(/\s+/g, '')}`}
-                    className="font-bold text-[#003399] hover:underline transition-colors"
+                    className="font-bold text-neutral-900 hover:text-[#003399] transition-colors"
                   >
                     {selectedBusiness.hotline}
                   </a>
@@ -543,7 +530,7 @@ export default function BusinessesSection() {
 
                 <button
                   onClick={() => setSelectedBusiness(null)}
-                  className="px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-[#003399] rounded-xl transition-colors cursor-pointer shadow-xs"
+                  className="px-6 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors cursor-pointer shadow-xs"
                 >
                   {t('close')}
                 </button>
