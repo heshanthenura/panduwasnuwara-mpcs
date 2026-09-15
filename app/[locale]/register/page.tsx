@@ -4,15 +4,16 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { UserPlus, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { UserPlus, ArrowLeft, AlertCircle } from 'lucide-react';
 
 export default function RegisterPage() {
   const t = useTranslations('Auth');
   const locale = useLocale();
   const router = useRouter();
 
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [nic, setNic] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +28,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (nic.trim().length < 5) {
+      setErrorMsg('Please provide a valid NIC number.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -35,15 +41,16 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'register',
-          username,
-          email,
+          fullName,
+          nic,
+          phone,
           password
         })
       });
 
       const data = await res.json();
       if (data.success) {
-        router.push(`/${locale}#gallery`);
+        router.push(`/${locale}/login?registered=true`);
       } else {
         setErrorMsg(data.error || t('userExists'));
       }
@@ -59,11 +66,11 @@ export default function RegisterPage() {
       <div className="max-w-md w-full bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-xs p-6 sm:p-8 space-y-6">
 
         <Link
-          href={`/${locale}#gallery`}
+          href={`/${locale}`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-900 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>{t('backToGallery')}</span>
+          <span>{t('backToHome')}</span>
         </Link>
 
         <div className="text-center space-y-2">
@@ -86,34 +93,52 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {/* Full Name */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-neutral-700">
-              {t('username')} *
+              {t('fullName')} *
             </label>
             <input
               type="text"
               required
-              minLength={3}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. nimal_perera"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder={t('fullNamePlaceholder')}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] focus:bg-white transition-colors"
             />
           </div>
 
+          {/* NIC Number */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-neutral-700">
-              {t('email')}
+              {t('nic')} *
             </label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. nimal@gmail.com"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+              type="text"
+              required
+              value={nic}
+              onChange={(e) => setNic(e.target.value.toUpperCase())}
+              placeholder={t('nicPlaceholder')}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] focus:bg-white transition-colors font-mono uppercase"
             />
           </div>
 
+          {/* Phone Number */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-neutral-700">
+              {t('phone')} *
+            </label>
+            <input
+              type="tel"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder={t('phonePlaceholder')}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] focus:bg-white transition-colors font-mono"
+            />
+          </div>
+
+          {/* Password */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-neutral-700">
               {t('password')} *
@@ -125,10 +150,11 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] focus:bg-white transition-colors"
             />
           </div>
 
+          {/* Confirm Password */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-neutral-700">
               {t('confirmPassword')} *
@@ -140,7 +166,7 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] focus:bg-white transition-colors"
             />
           </div>
 
