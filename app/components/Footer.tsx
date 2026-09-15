@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { 
   MapPin, 
   Phone, 
@@ -15,6 +15,7 @@ import {
 
 export default function Footer() {
   const t = useTranslations('Footer');
+  const locale = useLocale();
 
   return (
     <footer id="contact" className="w-full bg-[#080d1a] text-slate-300 font-sans border-t border-slate-800 relative">
@@ -125,7 +126,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/gallery" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                <Link href="/#gallery" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
                   <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkGallery')}</span>
                 </Link>
@@ -134,6 +135,12 @@ export default function Footer() {
                 <Link href="/#contact" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
                   <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkContact')}</span>
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/login`} className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
+                  <span>Admin Portal</span>
                 </Link>
               </li>
             </ul>
@@ -218,6 +225,11 @@ export default function Footer() {
             <Link href="/" className="hover:text-slate-200 transition-colors">{t('privacyPolicy')}</Link>
             <span className="w-px h-3 bg-white/15" />
             <Link href="/" className="hover:text-slate-200 transition-colors">{t('termsOfService')}</Link>
+            <span className="w-px h-3 bg-white/15" />
+            <Link href={`/${locale}/login`} className="hover:text-amber-400 transition-colors inline-flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400/80" />
+              <span>Admin Portal</span>
+            </Link>
           </div>
         </div>
       </div>

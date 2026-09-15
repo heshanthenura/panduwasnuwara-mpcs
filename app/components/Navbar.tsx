@@ -51,7 +51,7 @@ export default function Navbar() {
             </div>
 
             <Link
-              href="/gallery"
+              href="/#gallery"
               className="hover:text-gray-300 transition-colors duration-200"
             >
               {t('gallery')}
@@ -146,7 +146,7 @@ export default function Navbar() {
             </div>
 
             <Link
-              href="/gallery"
+              href="/#gallery"
               className="block py-3 hover:text-gray-300 transition-colors"
               onClick={() => setIsOpen(false)}
             >
