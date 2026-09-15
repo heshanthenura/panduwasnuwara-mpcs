@@ -88,6 +88,24 @@ export const SCHEMA_DEFINITIONS = {
       is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+  `,
+  newsAnnouncements: `
+    CREATE TABLE IF NOT EXISTS news_announcements (
+      id SERIAL PRIMARY KEY,
+      title_si VARCHAR(255) NOT NULL,
+      title_en VARCHAR(255) NOT NULL,
+      description_si TEXT NOT NULL,
+      description_en TEXT NOT NULL,
+      image_url TEXT,
+      category VARCHAR(64) DEFAULT 'general',
+      badge_text_si VARCHAR(100),
+      badge_text_en VARCHAR(100),
+      is_pinned BOOLEAN DEFAULT false,
+      is_published BOOLEAN DEFAULT true,
+      published_at TIMESTAMPTZ DEFAULT NOW(),
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `
 };
 
@@ -102,6 +120,7 @@ export async function initDatabaseSchema(): Promise<void> {
   await query(SCHEMA_DEFINITIONS.importedMembers);
   await query(SCHEMA_DEFINITIONS.eligibleVoters);
   await query(SCHEMA_DEFINITIONS.businesses);
+  await query(SCHEMA_DEFINITIONS.newsAnnouncements);
 
   // 2. Apply incremental schema alterations
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(150);`);

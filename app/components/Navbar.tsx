@@ -117,6 +117,13 @@ export default function Navbar() {
             </Link>
 
             <Link
+              href={`/${locale}#news`}
+              className="hover:text-gray-300 transition-colors duration-200"
+            >
+              {t('news')}
+            </Link>
+
+            <Link
               href={`/${locale}#contact`}
               className="hover:text-gray-300 transition-colors duration-200"
             >
@@ -228,6 +235,14 @@ export default function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               {t('gallery')}
+            </Link>
+
+            <Link
+              href={`/${locale}#news`}
+              className="block py-2.5 hover:text-gray-300 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              {t('news')}
             </Link>
 
             <Link

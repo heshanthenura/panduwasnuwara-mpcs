@@ -137,6 +137,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/#news" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
+                  <span>{t('linkNews')}</span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/#contact" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
                   <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkContact')}</span>
