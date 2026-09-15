@@ -56,6 +56,38 @@ export const SCHEMA_DEFINITIONS = {
       value TEXT NOT NULL,
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
+  `,
+  importedMembers: `
+    CREATE TABLE IF NOT EXISTS imported_members (
+      id SERIAL PRIMARY KEY,
+      member_number VARCHAR(100),
+      full_name VARCHAR(255) NOT NULL,
+      nic VARCHAR(50),
+      phone VARCHAR(50),
+      imported_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  eligibleVoters: `
+    CREATE TABLE IF NOT EXISTS eligible_voters (
+      id SERIAL PRIMARY KEY,
+      voter_number VARCHAR(100),
+      full_name VARCHAR(255) NOT NULL,
+      nic VARCHAR(50),
+      division VARCHAR(100),
+      uploaded_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  businesses: `
+    CREATE TABLE IF NOT EXISTS businesses (
+      id SERIAL PRIMARY KEY,
+      key VARCHAR(64) UNIQUE NOT NULL,
+      title_si VARCHAR(255) NOT NULL,
+      title_en VARCHAR(255) NOT NULL,
+      manager VARCHAR(150),
+      hotline VARCHAR(50),
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `
 };
 
@@ -67,6 +99,9 @@ export async function initDatabaseSchema(): Promise<void> {
   await query(SCHEMA_DEFINITIONS.galleryLikes);
   await query(SCHEMA_DEFINITIONS.galleryComments);
   await query(SCHEMA_DEFINITIONS.settings);
+  await query(SCHEMA_DEFINITIONS.importedMembers);
+  await query(SCHEMA_DEFINITIONS.eligibleVoters);
+  await query(SCHEMA_DEFINITIONS.businesses);
 
   // 2. Apply incremental schema alterations
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(150);`);

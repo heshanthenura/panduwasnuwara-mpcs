@@ -76,6 +76,44 @@ async function runMigrations(client) {
     );
   `);
 
+  // Imported members table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS imported_members (
+      id SERIAL PRIMARY KEY,
+      member_number VARCHAR(100),
+      full_name VARCHAR(255) NOT NULL,
+      nic VARCHAR(50),
+      phone VARCHAR(50),
+      imported_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
+  // Eligible voters table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS eligible_voters (
+      id SERIAL PRIMARY KEY,
+      voter_number VARCHAR(100),
+      full_name VARCHAR(255) NOT NULL,
+      nic VARCHAR(50),
+      division VARCHAR(100),
+      uploaded_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
+  // Businesses table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS businesses (
+      id SERIAL PRIMARY KEY,
+      key VARCHAR(64) UNIQUE NOT NULL,
+      title_si VARCHAR(255) NOT NULL,
+      title_en VARCHAR(255) NOT NULL,
+      manager VARCHAR(150),
+      hotline VARCHAR(50),
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
   console.log('✓ Database migrations completed.');
 }
 
