@@ -4,18 +4,23 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import { 
   MapPin, 
   Phone, 
   Mail, 
   Clock, 
-  ArrowRight,
   ShieldCheck
 } from 'lucide-react';
 
 export default function Footer() {
   const t = useTranslations('Footer');
   const locale = useLocale();
+  const pathname = usePathname();
+
+  if (pathname?.includes('/admin')) {
+    return null;
+  }
 
   return (
     <footer id="contact" className="w-full bg-[#080d1a] text-slate-300 font-sans border-t border-slate-800 relative">
