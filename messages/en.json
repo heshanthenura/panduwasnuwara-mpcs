@@ -43,7 +43,7 @@
     "emailTitle": "Email {name}"
   },
   "About": {
-    "eyebrow": "About the society",
+    "eyebrow": "About Us",
     "heading": "Rural banking, consumer goods and trade agencies, under one roof",
     "paragraph1": "Our co-operative brings the rural bank, consumer goods store, product agencies and a fuel station together for the benefit of the village. Protecting members' savings, supporting local traders and building a stronger community is the whole of our mission.",
     "paragraph2": "The society was registered on 6 October 1976 under the Department of Co-operatives. Fifty years on, it is still run the same way — by elected members, for members.",
@@ -52,6 +52,8 @@
     "visionDesc": "To become the leading trading institution providing high-standard business services within our area.",
     "missionTitle": "Our mission",
     "missionDesc": "To develop this co-operative into a quality-driven, productive and efficient business by fulfilling the social commitment of enhancing member economic growth — through reliable banking, fair trade and community-centred service.",
+    "aboutUsTitle": "About Us",
+    "aboutUsDesc": "Panduwasnuwara Multi Purpose Co-Operative Society is dedicated to fostering sustainable economic empowerment, member welfare, and ethical cooperative enterprise across our region.",
     "yearsLabel": "25+ Years of Service",
     "estLabel": "Est. 1976-10-06",
     "regLabel": "Reg: කුරු/186",
@@ -65,6 +67,20 @@
     "visionSecondary": "Delivering excellence in co-operative services to uplift the livelihoods of our members and surrounding community.",
     "missionPrimary": "To develop this co-operative into a quality-driven, productive and efficient business by fulfilling the social commitment of enhancing member economic growth — through reliable banking, fair trade and community-centred service.",
     "missionSecondary": "We are committed to empowering members through reliable banking, fair trade, and community-centered services."
+  },
+  "LiveMetrics": {
+    "badge": "LIVE STATISTICS",
+    "heading": "Real-Time Co-operative Overview",
+    "subtext": "Dynamic operational figures updated live across membership, voting rights, and commercial enterprises.",
+    "liveIndicator": "Real-Time Sync",
+    "membersTitle": "Co-op Members",
+    "membersDesc": "Imported verified registry",
+    "votersTitle": "Eligible Voters",
+    "votersDesc": "Electoral register verified",
+    "businessesTitle": "Business Divisions",
+    "businessesDesc": "Active commercial sectors",
+    "yearsTitle": "Years of Service",
+    "yearsDesc": "Dedicated community trust"
   },
   "Businesses": {
     "eyebrow": "OUR BUSINESSES & SERVICES",
@@ -193,8 +209,22 @@
     "whatsappSettingTitle": "Password Reset WhatsApp Number",
     "whatsappSettingDesc": "When a member uses the 'Forgot Password' option, their details will be pre-filled into a WhatsApp message sent to this mobile number.",
     "whatsappPlaceholder": "e.g. 94771234567",
+    "yearsSettingTitle": "Years of Service Configuration",
+    "yearsSettingDesc": "Configure the operational years of service displayed on the live homepage statistics counter.",
+    "yearsPlaceholder": "e.g. 50",
     "saveSettings": "Save Settings",
     "settingsUpdated": "Settings updated successfully",
+    "metricsTab": "Data & Live Metrics",
+    "membersImportTitle": "Import Members (CSV / Excel)",
+    "membersImportDesc": "Upload a member spreadsheet file (.csv) to dynamically update the live members counter.",
+    "votersUploadTitle": "Upload Electoral Register (Eligible Voters)",
+    "votersUploadDesc": "Upload verified voter records from the electoral register file to update the live eligible voters count.",
+    "uploadBtn": "Upload & Process File",
+    "modeAppend": "Append to existing list",
+    "modeReplace": "Replace entire existing list",
+    "importedCountLabel": "Imported Members in Registry",
+    "votersCountLabel": "Verified Eligible Voters",
+    "businessesCountLabel": "Active Registered Businesses",
     "noMembersFound": "No members found matching your search.",
     "noCommentsFound": "No comments available to moderate."
   }

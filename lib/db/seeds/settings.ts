@@ -7,4 +7,11 @@ export async function seedSettings(): Promise<void> {
     VALUES ('recovery_whatsapp_number', '94771234567')
     ON CONFLICT (key) DO NOTHING;
   `);
+
+  // Default Years of Service
+  await query(`
+    INSERT INTO settings (key, value)
+    VALUES ('years_of_service', '50')
+    ON CONFLICT (key) DO NOTHING;
+  `);
 }
