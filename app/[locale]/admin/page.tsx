@@ -19,10 +19,15 @@ import {
   Phone,
   MessageCircle,
   User as UserIcon,
-  MessageSquare,
   Globe,
   Menu,
-  ArrowRight
+  ArrowRight,
+  BarChart3,
+  Upload,
+  FileSpreadsheet,
+  UserCheck,
+  Building2,
+  Calendar
 } from 'lucide-react';
 import { User, GalleryPost } from '@/lib/types';
 
@@ -31,15 +36,36 @@ export default function AdminDashboardPage() {
   const locale = useLocale();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<'users' | 'gallery' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'metrics' | 'gallery' | 'settings'>('users');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [galleryPosts, setGalleryPosts] = useState<GalleryPost[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [yearsOfService, setYearsOfService] = useState('50');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
+
+  // Live Statistics State
+  const [liveStats, setLiveStats] = useState({
+    membersCount: 0,
+    votersCount: 0,
+    businessesCount: 10,
+    yearsOfService: 50
+  });
+
+  // Member CSV Upload State
+  const [memberFile, setMemberFile] = useState<File | null>(null);
+  const [memberMode, setMemberMode] = useState<'append' | 'replace'>('append');
+  const [isImportingMembers, setIsImportingMembers] = useState(false);
+  const [memberImportMsg, setMemberImportMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Voter Register Upload State
+  const [voterFile, setVoterFile] = useState<File | null>(null);
+  const [voterMode, setVoterMode] = useState<'append' | 'replace'>('append');
+  const [isUploadingVoters, setIsUploadingVoters] = useState(false);
+  const [voterUploadMsg, setVoterUploadMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Edit user modal state
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -54,20 +80,33 @@ export default function AdminDashboardPage() {
   const loadAdminData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [usersRes, galleryRes, settingsRes] = await Promise.all([
+      const [usersRes, galleryRes, settingsRes, statsRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/gallery'),
-        fetch('/api/admin/settings')
+        fetch('/api/admin/settings'),
+        fetch('/api/stats')
       ]);
 
       const usersData = await usersRes.json();
       const galleryData = await galleryRes.json();
       const settingsData = await settingsRes.json();
+      const statsData = await statsRes.json();
 
       if (usersData.success) setUsers(usersData.users);
       if (galleryData.success) setGalleryPosts(galleryData.posts);
-      if (settingsData.success && settingsData.settings?.recoveryWhatsAppNumber) {
-        setWhatsappNumber(settingsData.settings.recoveryWhatsAppNumber);
+      if (settingsData.success) {
+        if (settingsData.settings?.recoveryWhatsAppNumber) {
+          setWhatsappNumber(settingsData.settings.recoveryWhatsAppNumber);
+        }
+        if (settingsData.settings?.yearsOfService) {
+          setYearsOfService(String(settingsData.settings.yearsOfService));
+        }
+      }
+      if (statsData.success && statsData.stats) {
+        setLiveStats(statsData.stats);
+        if (statsData.stats.yearsOfService) {
+          setYearsOfService(String(statsData.stats.yearsOfService));
+        }
       }
     } catch (err) {
       console.error('Failed to load admin data:', err);
@@ -194,27 +233,98 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Save Settings
+  // Save Settings (WhatsApp & Years of Service)
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingSettings(true);
     setSettingsSuccess(false);
 
     try {
+      const parsedYears = parseInt(yearsOfService, 10) || 50;
       const res = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recoveryWhatsAppNumber: whatsappNumber })
+        body: JSON.stringify({
+          recoveryWhatsAppNumber: whatsappNumber,
+          yearsOfService: parsedYears
+        })
       });
       const data = await res.json();
       if (data.success) {
         setSettingsSuccess(true);
+        setLiveStats(prev => ({ ...prev, yearsOfService: parsedYears }));
         setTimeout(() => setSettingsSuccess(false), 3000);
       }
     } catch (err) {
       console.error('Failed to save settings:', err);
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  // Import Members from CSV
+  const handleImportMembers = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!memberFile) return;
+
+    setIsImportingMembers(true);
+    setMemberImportMsg(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', memberFile);
+      formData.append('mode', memberMode);
+
+      const res = await fetch('/api/admin/members/import', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setMemberImportMsg({ type: 'success', text: data.message || `Successfully imported ${data.importedCount} members!` });
+        setLiveStats(prev => ({ ...prev, membersCount: data.totalCount }));
+        setMemberFile(null);
+      } else {
+        setMemberImportMsg({ type: 'error', text: data.error || 'Failed to import member records.' });
+      }
+    } catch {
+      setMemberImportMsg({ type: 'error', text: 'Error uploading file.' });
+    } finally {
+      setIsImportingMembers(false);
+    }
+  };
+
+  // Upload Electoral Register (Eligible Voters)
+  const handleUploadVoters = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!voterFile) return;
+
+    setIsUploadingVoters(true);
+    setVoterUploadMsg(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', voterFile);
+      formData.append('mode', voterMode);
+
+      const res = await fetch('/api/admin/voters/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setVoterUploadMsg({ type: 'success', text: data.message || `Successfully processed ${data.uploadedCount} eligible voters!` });
+        setLiveStats(prev => ({ ...prev, votersCount: data.totalCount }));
+        setVoterFile(null);
+      } else {
+        setVoterUploadMsg({ type: 'error', text: data.error || 'Failed to upload electoral register.' });
+      }
+    } catch {
+      setVoterUploadMsg({ type: 'error', text: 'Error uploading electoral register file.' });
+    } finally {
+      setIsUploadingVoters(false);
     }
   };
 
@@ -228,8 +338,6 @@ export default function AdminDashboardPage() {
       (u.username && u.username.toLowerCase().includes(q))
     );
   });
-
-  const totalCommentsCount = galleryPosts.reduce((acc, p) => acc + p.comments.length, 0);
 
   if (isLoading) {
     return (
@@ -358,6 +466,23 @@ export default function AdminDashboardPage() {
 
             <button
               onClick={() => {
+                setActiveTab('metrics');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'metrics'
+                  ? 'bg-neutral-900 text-white shadow-xs'
+                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <BarChart3 className="w-4 h-4" />
+                <span>{t('metricsTab')}</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
                 setActiveTab('gallery');
                 setIsMobileSidebarOpen(false);
               }}
@@ -443,6 +568,7 @@ export default function AdminDashboardPage() {
           <div>
             <h1 className="font-condensed text-xl font-bold text-neutral-900 leading-tight">
               {activeTab === 'users' && t('usersTab')}
+              {activeTab === 'metrics' && t('metricsTab')}
               {activeTab === 'gallery' && t('galleryTab')}
               {activeTab === 'settings' && t('settingsTab')}
             </h1>
@@ -464,39 +590,6 @@ export default function AdminDashboardPage() {
 
         {/* Content Container */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full">
-          {/* Overview Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-neutral-500">{t('totalMembers')}</span>
-                <div className="w-8 h-8 rounded-lg bg-neutral-50 border border-neutral-200/70 flex items-center justify-center text-neutral-600">
-                  <Users className="w-4 h-4" />
-                </div>
-              </div>
-              <p className="text-2xl font-semibold tracking-tight text-neutral-900">{users.length}</p>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-neutral-500">{t('totalPosts')}</span>
-                <div className="w-8 h-8 rounded-lg bg-neutral-50 border border-neutral-200/70 flex items-center justify-center text-neutral-600">
-                  <ImageIcon className="w-4 h-4" />
-                </div>
-              </div>
-              <p className="text-2xl font-semibold tracking-tight text-neutral-900">{galleryPosts.length}</p>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-neutral-500">{t('totalComments')}</span>
-                <div className="w-8 h-8 rounded-lg bg-neutral-50 border border-neutral-200/70 flex items-center justify-center text-neutral-600">
-                  <MessageSquare className="w-4 h-4" />
-                </div>
-              </div>
-              <p className="text-2xl font-semibold tracking-tight text-neutral-900">{totalCommentsCount}</p>
-            </div>
-          </div>
-
         {/* TAB 1: USERS MANAGEMENT */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
@@ -594,7 +687,263 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* TAB 2: GALLERY MODERATION */}
+        {/* TAB 2: DATA & LIVE METRICS (CSV / EXCEL & ELECTORAL REGISTER IMPORTS) */}
+        {activeTab === 'metrics' && (
+          <div className="space-y-6">
+            {/* Top Info Banner */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-2">
+              <div className="flex items-center gap-2 text-[#003399]">
+                <BarChart3 className="w-5 h-5" />
+                <h2 className="font-condensed text-lg font-bold text-neutral-900">
+                  {t('metricsTab')}
+                </h2>
+              </div>
+              <p className="text-xs text-neutral-500 max-w-3xl leading-relaxed">
+                {locale === 'si'
+                  ? 'මෙහිදී සාමාජික ලැයිස්තු (CSV/Excel) සහ මැතිවරණ නාමලේඛන (Electoral Register) උඩුගත කිරීම මගින් මුල් පිටුවේ සජීවී කවුන්ටරය ස්වයංක්‍රීයව යාවත්කාලීන කළ හැකිය.'
+                  : 'Manage operational data registries. Uploading member spreadsheets (CSV/Excel) and official electoral register files automatically reflects on the real-time homepage live counter every 5 seconds.'}
+              </p>
+            </div>
+
+            {/* Overview Stats Cards - 4 Live Counter Cards (Analytics Only) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-neutral-500">{t('totalMembers')}</span>
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200/60 flex items-center justify-center text-[#003399]">
+                    <Users className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl font-semibold tracking-tight text-neutral-900 font-mono">
+                  {(liveStats.membersCount || users.length).toLocaleString()}
+                </p>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-neutral-500">{t('votersCountLabel')}</span>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-700">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl font-semibold tracking-tight text-neutral-900 font-mono">
+                  {liveStats.votersCount.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-neutral-500">{t('businessesCountLabel')}</span>
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-700">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl font-semibold tracking-tight text-neutral-900 font-mono">
+                  {liveStats.businessesCount}
+                </p>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-neutral-500">{t('yearsSettingTitle')}</span>
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200/60 flex items-center justify-center text-indigo-700">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl font-semibold tracking-tight text-neutral-900 font-mono">
+                  {liveStats.yearsOfService}+ Yrs
+                </p>
+              </div>
+            </div>
+
+            {/* Grid of 2 Upload Sections */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* SECTION A: MEMBERS CSV/EXCEL IMPORT */}
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <div className="flex items-center gap-2 text-[#003399]">
+                      <FileSpreadsheet className="w-5 h-5" />
+                      <h3 className="font-condensed text-base font-bold text-neutral-900">
+                        {t('membersImportTitle')}
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-[#003399] font-bold border border-blue-200/60">
+                      {liveStats.membersCount.toLocaleString()} {locale === 'si' ? 'සාමාජිකයින්' : 'Members'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    {t('membersImportDesc')}
+                  </p>
+
+                  {memberImportMsg && (
+                    <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                      memberImportMsg.type === 'success' 
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+                        : 'bg-rose-50 border border-rose-200 text-rose-800'
+                    }`}>
+                      {memberImportMsg.type === 'success' ? <Check className="w-4 h-4 text-emerald-600 shrink-0" /> : null}
+                      <span>{memberImportMsg.text}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleImportMembers} className="space-y-4 pt-1">
+                    {/* File Input */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-neutral-700">
+                        {locale === 'si' ? 'සාමාජික ගොනුව තෝරන්න (CSV / TSV / Excel)' : 'Select Member File (CSV / TSV)'}
+                      </label>
+                      <input
+                        type="file"
+                        accept=".csv,.txt,.tsv"
+                        required
+                        onChange={e => setMemberFile(e.target.files?.[0] || null)}
+                        className="w-full text-xs text-neutral-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-neutral-700 hover:file:bg-slate-200 cursor-pointer border border-neutral-200 rounded-xl p-2 bg-slate-50"
+                      />
+                    </div>
+
+                    {/* Mode Radio */}
+                    <div className="flex items-center gap-4 text-xs text-neutral-700">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="memberMode"
+                          value="append"
+                          checked={memberMode === 'append'}
+                          onChange={() => setMemberMode('append')}
+                          className="text-[#003399]"
+                        />
+                        <span>{t('modeAppend')}</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="memberMode"
+                          value="replace"
+                          checked={memberMode === 'replace'}
+                          onChange={() => setMemberMode('replace')}
+                          className="text-[#003399]"
+                        />
+                        <span>{t('modeReplace')}</span>
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isImportingMembers || !memberFile}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[#003399] hover:bg-[#002266] text-white text-xs font-bold transition-colors cursor-pointer shadow-xs disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <Upload className={`w-3.5 h-3.5 ${isImportingMembers ? 'animate-bounce' : ''}`} />
+                      <span>{isImportingMembers ? 'Processing...' : t('uploadBtn')}</span>
+                    </button>
+                  </form>
+                </div>
+
+                {/* Helper Schema Snippet */}
+                <div className="pt-3 border-t border-neutral-100 mt-4 text-[11px] text-neutral-400 font-mono space-y-1 bg-slate-50/70 p-3 rounded-xl border border-neutral-100">
+                  <p className="font-bold text-neutral-600 font-sans">{locale === 'si' ? 'අනුමත තීරු පිළිවෙළ:' : 'Expected Columns Format:'}</p>
+                  <p className="text-neutral-600">Member_Number, Full_Name, NIC, Phone</p>
+                  <p className="text-neutral-400 text-[10px] font-sans">{locale === 'si' ? 'හෝ නම සහ හැඳුනුම්පත් අංකය සහිත ඕනෑම CSV ගොනුවක්.' : 'Header row is automatically detected.'}</p>
+                </div>
+              </div>
+
+              {/* SECTION B: ELECTORAL REGISTER UPLOAD (ELIGIBLE VOTERS) */}
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <div className="flex items-center gap-2 text-emerald-700">
+                      <UserCheck className="w-5 h-5" />
+                      <h3 className="font-condensed text-base font-bold text-neutral-900">
+                        {t('votersUploadTitle')}
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60">
+                      {liveStats.votersCount.toLocaleString()} {locale === 'si' ? 'ඡන්දදායකයින්' : 'Voters'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    {t('votersUploadDesc')}
+                  </p>
+
+                  {voterUploadMsg && (
+                    <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                      voterUploadMsg.type === 'success' 
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+                        : 'bg-rose-50 border border-rose-200 text-rose-800'
+                    }`}>
+                      {voterUploadMsg.type === 'success' ? <Check className="w-4 h-4 text-emerald-600 shrink-0" /> : null}
+                      <span>{voterUploadMsg.text}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleUploadVoters} className="space-y-4 pt-1">
+                    {/* File Input */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-neutral-700">
+                        {locale === 'si' ? 'ඡන්ද හිමි නාමලේඛන ගොනුව (CSV / Text)' : 'Select Electoral Register File (CSV / Text)'}
+                      </label>
+                      <input
+                        type="file"
+                        accept=".csv,.txt,.tsv"
+                        required
+                        onChange={e => setVoterFile(e.target.files?.[0] || null)}
+                        className="w-full text-xs text-neutral-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-neutral-700 hover:file:bg-slate-200 cursor-pointer border border-neutral-200 rounded-xl p-2 bg-slate-50"
+                      />
+                    </div>
+
+                    {/* Mode Radio */}
+                    <div className="flex items-center gap-4 text-xs text-neutral-700">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="voterMode"
+                          value="append"
+                          checked={voterMode === 'append'}
+                          onChange={() => setVoterMode('append')}
+                          className="text-emerald-700"
+                        />
+                        <span>{t('modeAppend')}</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="voterMode"
+                          value="replace"
+                          checked={voterMode === 'replace'}
+                          onChange={() => setVoterMode('replace')}
+                          className="text-emerald-700"
+                        />
+                        <span>{t('modeReplace')}</span>
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isUploadingVoters || !voterFile}
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <Upload className={`w-3.5 h-3.5 ${isUploadingVoters ? 'animate-bounce' : ''}`} />
+                      <span>{isUploadingVoters ? 'Processing...' : t('uploadBtn')}</span>
+                    </button>
+                  </form>
+                </div>
+
+                {/* Helper Schema Snippet */}
+                <div className="pt-3 border-t border-neutral-100 mt-4 text-[11px] text-neutral-400 font-mono space-y-1 bg-slate-50/70 p-3 rounded-xl border border-neutral-100">
+                  <p className="font-bold text-neutral-600 font-sans">{locale === 'si' ? 'අනුමත තීරු පිළිවෙළ:' : 'Expected Columns Format:'}</p>
+                  <p className="text-neutral-600">Voter_Number, Full_Name, NIC, Polling_Division</p>
+                  <p className="text-neutral-400 text-[10px] font-sans">{locale === 'si' ? 'හෝ නම සහ හැඳුනුම්පත් අංකය සහිත ලැයිස්තුව.' : 'Verified voters count automatically syncs.'}</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: GALLERY MODERATION */}
         {activeTab === 'gallery' && (
           <div className="space-y-6">
             {galleryPosts.map(post => (
@@ -699,6 +1048,31 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-[11px] text-neutral-400">
                   Example for Sri Lanka: <strong>94771234567</strong> (without leading 0 or spaces).
+                </p>
+              </div>
+
+              {/* Years of Service Field */}
+              <div className="space-y-1.5 pt-3 border-t border-neutral-100">
+                <div className="flex items-center gap-2 text-indigo-700">
+                  <Calendar className="w-4 h-4" />
+                  <label className="block text-xs font-bold text-neutral-700">
+                    {t('yearsSettingTitle')}
+                  </label>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="150"
+                    required
+                    value={yearsOfService}
+                    onChange={e => setYearsOfService(e.target.value)}
+                    placeholder={t('yearsPlaceholder')}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] font-mono"
+                  />
+                </div>
+                <p className="text-[11px] text-neutral-400">
+                  {t('yearsSettingDesc')}
                 </p>
               </div>
 
