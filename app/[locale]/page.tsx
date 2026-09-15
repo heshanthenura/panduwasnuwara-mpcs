@@ -3,6 +3,7 @@ import BoardSection from '@/app/components/BoardSection';
 import AboutSection from '@/app/components/AboutSection';
 import BusinessesSection from '@/app/components/BusinessesSection';
 import GallerySection from '@/app/components/GallerySection';
+import NewsSection from '@/app/components/NewsSection';
 
 export default function Home() {
 
@@ -13,6 +14,7 @@ export default function Home() {
       <AboutSection />
       <BusinessesSection />
       <GallerySection />
+      <NewsSection />
     </div>
   );
 }
