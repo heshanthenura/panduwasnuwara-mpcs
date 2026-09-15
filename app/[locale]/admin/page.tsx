@@ -27,25 +27,52 @@ import {
   FileSpreadsheet,
   UserCheck,
   Building2,
-  Calendar
+  Calendar,
+  Newspaper,
+  Plus,
+  Pin,
+  Tag,
+  Eye,
+  EyeOff
 } from 'lucide-react';
-import { User, GalleryPost } from '@/lib/types';
+import { User, GalleryPost, NewsAnnouncement } from '@/lib/types';
 
 export default function AdminDashboardPage() {
   const t = useTranslations('Admin');
   const locale = useLocale();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<'users' | 'metrics' | 'gallery' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'metrics' | 'news' | 'gallery' | 'settings'>('users');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [galleryPosts, setGalleryPosts] = useState<GalleryPost[]>([]);
+  const [newsList, setNewsList] = useState<NewsAnnouncement[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [newsSearchQuery, setNewsSearchQuery] = useState('');
+  const [newsCategoryFilter, setNewsCategoryFilter] = useState('all');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [yearsOfService, setYearsOfService] = useState('50');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
+
+  // News Modal & Form State
+  const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
+  const [editingNews, setEditingNews] = useState<NewsAnnouncement | null>(null);
+  const [newsTitleSi, setNewsTitleSi] = useState('');
+  const [newsTitleEn, setNewsTitleEn] = useState('');
+  const [newsDescSi, setNewsDescSi] = useState('');
+  const [newsDescEn, setNewsDescEn] = useState('');
+  const [newsCategory, setNewsCategory] = useState('vacancy');
+  const [newsBadgeSi, setNewsBadgeSi] = useState('');
+  const [newsBadgeEn, setNewsBadgeEn] = useState('');
+  const [newsIsPinned, setNewsIsPinned] = useState(false);
+  const [newsIsPublished, setNewsIsPublished] = useState(true);
+  const [newsImageFile, setNewsImageFile] = useState<File | null>(null);
+  const [newsImagePreview, setNewsImagePreview] = useState<string | null>(null);
+  const [newsImageUrlInput, setNewsImageUrlInput] = useState('');
+  const [isSavingNews, setIsSavingNews] = useState(false);
+  const [newsError, setNewsError] = useState('');
 
   // Live Statistics State
   const [liveStats, setLiveStats] = useState({
@@ -80,20 +107,23 @@ export default function AdminDashboardPage() {
   const loadAdminData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [usersRes, galleryRes, settingsRes, statsRes] = await Promise.all([
+      const [usersRes, galleryRes, settingsRes, statsRes, newsRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/gallery'),
         fetch('/api/admin/settings'),
-        fetch('/api/stats')
+        fetch('/api/stats'),
+        fetch('/api/admin/news')
       ]);
 
       const usersData = await usersRes.json();
       const galleryData = await galleryRes.json();
       const settingsData = await settingsRes.json();
       const statsData = await statsRes.json();
+      const newsData = await newsRes.json();
 
       if (usersData.success) setUsers(usersData.users);
       if (galleryData.success) setGalleryPosts(galleryData.posts);
+      if (newsData.success && Array.isArray(newsData.news)) setNewsList(newsData.news);
       if (settingsData.success) {
         if (settingsData.settings?.recoveryWhatsAppNumber) {
           setWhatsappNumber(settingsData.settings.recoveryWhatsAppNumber);
@@ -339,6 +369,181 @@ export default function AdminDashboardPage() {
     );
   });
 
+  // Filtered news for search and category
+  const filteredNews = newsList.filter(item => {
+    const q = newsSearchQuery.toLowerCase();
+    const matchesSearch =
+      (item.title_si && item.title_si.toLowerCase().includes(q)) ||
+      (item.title_en && item.title_en.toLowerCase().includes(q)) ||
+      (item.description_si && item.description_si.toLowerCase().includes(q)) ||
+      (item.description_en && item.description_en.toLowerCase().includes(q));
+
+    const matchesCategory =
+      newsCategoryFilter === 'all' || item.category?.toLowerCase() === newsCategoryFilter.toLowerCase();
+
+    return matchesSearch && matchesCategory;
+  });
+
+  // Open Add News Modal
+  const openAddNewsModal = () => {
+    setEditingNews(null);
+    setNewsTitleSi('');
+    setNewsTitleEn('');
+    setNewsDescSi('');
+    setNewsDescEn('');
+    setNewsCategory('vacancy');
+    setNewsBadgeSi('');
+    setNewsBadgeEn('');
+    setNewsIsPinned(false);
+    setNewsIsPublished(true);
+    setNewsImageFile(null);
+    setNewsImagePreview(null);
+    setNewsImageUrlInput('');
+    setNewsError('');
+    setIsNewsModalOpen(true);
+  };
+
+  // Open Edit News Modal
+  const openEditNewsModal = (item: NewsAnnouncement) => {
+    setEditingNews(item);
+    setNewsTitleSi(item.title_si || '');
+    setNewsTitleEn(item.title_en || '');
+    setNewsDescSi(item.description_si || '');
+    setNewsDescEn(item.description_en || '');
+    setNewsCategory(item.category || 'general');
+    setNewsBadgeSi(item.badge_text_si || '');
+    setNewsBadgeEn(item.badge_text_en || '');
+    setNewsIsPinned(Boolean(item.is_pinned));
+    setNewsIsPublished(item.is_published !== false);
+    setNewsImageFile(null);
+    setNewsImagePreview(item.image_url || null);
+    setNewsImageUrlInput(item.image_url || '');
+    setNewsError('');
+    setIsNewsModalOpen(true);
+  };
+
+  // Handle Image Selection
+  const handleNewsImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewsImageFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setNewsImagePreview(previewUrl);
+    }
+  };
+
+  // Save News (Add or Edit)
+  const handleSaveNews = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingNews(true);
+    setNewsError('');
+
+    try {
+      const formData = new FormData();
+      if (editingNews) {
+        formData.append('id', String(editingNews.id));
+      }
+      formData.append('title_si', newsTitleSi);
+      formData.append('title_en', newsTitleEn);
+      formData.append('description_si', newsDescSi);
+      formData.append('description_en', newsDescEn);
+      formData.append('category', newsCategory);
+      if (newsBadgeSi) formData.append('badge_text_si', newsBadgeSi);
+      if (newsBadgeEn) formData.append('badge_text_en', newsBadgeEn);
+      formData.append('is_pinned', String(newsIsPinned));
+      formData.append('is_published', String(newsIsPublished));
+
+      if (newsImageFile) {
+        formData.append('image', newsImageFile);
+      } else if (newsImageUrlInput) {
+        formData.append('image_url', newsImageUrlInput);
+      }
+
+      const method = editingNews ? 'PUT' : 'POST';
+      const res = await fetch('/api/admin/news', {
+        method,
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success && data.announcement) {
+        if (editingNews) {
+          setNewsList(prev => prev.map(n => n.id === editingNews.id ? data.announcement : n));
+        } else {
+          setNewsList(prev => [data.announcement, ...prev]);
+        }
+        setIsNewsModalOpen(false);
+      } else {
+        setNewsError(data.error || 'Failed to save announcement');
+      }
+    } catch {
+      setNewsError('Network error saving announcement');
+    } finally {
+      setIsSavingNews(false);
+    }
+  };
+
+  // Delete News
+  const handleDeleteNews = async (id: number) => {
+    if (!confirm(t('deleteNewsConfirm'))) return;
+
+    try {
+      const res = await fetch('/api/admin/news', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewsList(prev => prev.filter(n => n.id !== id));
+      } else {
+        alert(data.error || 'Failed to delete announcement');
+      }
+    } catch {
+      alert('Error deleting announcement');
+    }
+  };
+
+  // Quick Toggle Publish Status
+  const handleTogglePublish = async (item: NewsAnnouncement) => {
+    try {
+      const res = await fetch('/api/admin/news', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: item.id,
+          is_published: !item.is_published
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.announcement) {
+        setNewsList(prev => prev.map(n => n.id === item.id ? data.announcement : n));
+      }
+    } catch (err) {
+      console.error('Error toggling publish status:', err);
+    }
+  };
+
+  // Quick Toggle Pin Status
+  const handleTogglePin = async (item: NewsAnnouncement) => {
+    try {
+      const res = await fetch('/api/admin/news', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: item.id,
+          is_pinned: !item.is_pinned
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.announcement) {
+        setNewsList(prev => prev.map(n => n.id === item.id ? data.announcement : n));
+      }
+    } catch (err) {
+      console.error('Error toggling pin status:', err);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center font-sans">
@@ -479,6 +684,30 @@ export default function AdminDashboardPage() {
                 <BarChart3 className="w-4 h-4" />
                 <span>{t('metricsTab')}</span>
               </div>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('news');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'news'
+                  ? 'bg-neutral-900 text-white shadow-xs'
+                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Newspaper className="w-4 h-4" />
+                <span>{t('newsTab')}</span>
+              </div>
+              <span
+                className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${
+                  activeTab === 'news' ? 'bg-neutral-800 text-neutral-200' : 'bg-neutral-100 text-neutral-500'
+                }`}
+              >
+                {newsList.length}
+              </span>
             </button>
 
             <button
@@ -943,6 +1172,230 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
+        {/* TAB: NEWS & ANNOUNCEMENTS MANAGEMENT */}
+        {activeTab === 'news' && (
+          <div className="space-y-6">
+            {/* Top Toolbar */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#003399] flex items-center justify-center shrink-0 border border-blue-100">
+                    <Newspaper className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-condensed text-lg sm:text-xl font-bold text-neutral-900 leading-tight">
+                      {t('newsTab')}
+                    </h2>
+                    <p className="text-xs text-neutral-500 font-medium mt-0.5">
+                      {locale === 'si' 
+                        ? 'මුල් පිටුවේ ප්‍රදර්ශනය වන පුවත්, රැකියා ඇබෑර්තු සහ නිවේදන කළමනාකරණය.'
+                        : 'Manage official notices, driver / job vacancies, and public announcements.'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={openAddNewsModal}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#003399] hover:bg-[#002266] text-white text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{t('addNewsBtn')}</span>
+                </button>
+              </div>
+
+              {/* Filters & Search */}
+              <div className="pt-3 border-t border-neutral-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={newsSearchQuery}
+                    onChange={e => setNewsSearchQuery(e.target.value)}
+                    placeholder={locale === 'si' ? 'නිවේදන මාතෘකා හෝ අන්තර්ගතය සොයන්න...' : 'Search notices by headline or content...'}
+                    className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                  {newsSearchQuery && (
+                    <button
+                      onClick={() => setNewsSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Category Pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { id: 'all', label: locale === 'si' ? 'සියල්ල' : 'All' },
+                    { id: 'vacancy', label: locale === 'si' ? 'රැකියා ඇබෑර්තු' : 'Vacancies' },
+                    { id: 'notice', label: locale === 'si' ? 'විශේෂ නිවේදන' : 'Notices' },
+                    { id: 'tender', label: locale === 'si' ? 'ටෙන්ඩර්' : 'Tenders' },
+                    { id: 'general', label: locale === 'si' ? 'පොදු' : 'General' }
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setNewsCategoryFilter(cat.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                        newsCategoryFilter === cat.id
+                          ? 'bg-neutral-900 text-white shadow-2xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-neutral-600'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Empty State */}
+            {filteredNews.length === 0 && (
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-12 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto">
+                  <Newspaper className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-bold text-neutral-800">
+                  {locale === 'si' ? 'කිසිදු නිවේදනයක් හමු නොවීය.' : 'No announcements found.'}
+                </h3>
+                <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                  {locale === 'si' ? 'නව නිවේදනයක් පළ කිරීමට ඉහත බොත්තම ක්ලික් කරන්න.' : 'Click "Add Announcement" above to publish your first notice.'}
+                </p>
+              </div>
+            )}
+
+            {/* News Cards Grid / List */}
+            {filteredNews.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {filteredNews.map(item => {
+                  const displayTitle = locale === 'si' ? (item.title_si || item.title_en) : (item.title_en || item.title_si);
+                  const displayDesc = locale === 'si' ? (item.description_si || item.description_en) : (item.description_en || item.description_si);
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 flex flex-col justify-between space-y-4 hover:border-neutral-300 transition-all"
+                    >
+                      <div className="space-y-3.5">
+                        {/* Header with image, category, and pin */}
+                        <div className="flex items-start gap-4">
+                          <div className="relative w-24 h-20 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-neutral-200">
+                            {item.image_url ? (
+                              <Image
+                                src={item.image_url}
+                                alt={displayTitle}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-neutral-400 bg-slate-50">
+                                <Newspaper className="w-6 h-6" />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 text-[10px] font-bold border border-blue-200 uppercase">
+                                {item.category}
+                              </span>
+
+                              {item.is_pinned && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] font-bold border border-amber-300">
+                                  <Pin className="w-2.5 h-2.5 fill-current" />
+                                  <span>Pinned</span>
+                                </span>
+                              )}
+
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                item.is_published 
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                                  : 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                              }`}>
+                                {item.is_published ? t('publishStatusPublished') : t('publishStatusDraft')}
+                              </span>
+                            </div>
+
+                            <p className="text-[11px] text-neutral-400 font-mono">
+                              {new Date(item.published_at || item.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Prominent Title */}
+                        <h3 className="font-condensed text-base sm:text-lg font-bold text-neutral-900 leading-snug line-clamp-2">
+                          {displayTitle}
+                        </h3>
+
+                        {/* Description excerpt */}
+                        <p className="text-xs text-neutral-600 leading-relaxed line-clamp-3">
+                          {displayDesc}
+                        </p>
+                      </div>
+
+                      {/* Action Bar */}
+                      <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          {/* Pin Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePin(item)}
+                            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                              item.is_pinned
+                                ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                                : 'bg-slate-50 text-neutral-400 border-neutral-200 hover:bg-slate-100'
+                            }`}
+                            title={item.is_pinned ? 'Unpin from top' : 'Pin to top of homepage'}
+                          >
+                            <Pin className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Publish Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePublish(item)}
+                            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                              item.is_published
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200'
+                            }`}
+                            title={item.is_published ? 'Unpublish (hide from website)' : 'Publish (show on website)'}
+                          >
+                            {item.is_published ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEditNewsModal(item)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-neutral-700 font-semibold transition-colors cursor-pointer"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            <span>{t('edit')}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteNews(item.id)}
+                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title={t('delete')}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+          </div>
+        )}
+
         {/* TAB 3: GALLERY MODERATION */}
         {activeTab === 'gallery' && (
           <div className="space-y-6">
@@ -1191,6 +1644,231 @@ export default function AdminDashboardPage() {
                   {isSavingUser ? 'Saving...' : t('saveChanges')}
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD / EDIT NEWS ANNOUNCEMENT MODAL */}
+      {isNewsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden relative animate-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-neutral-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-[#003399]">
+                <Newspaper className="w-5 h-5" />
+                <h3 className="font-condensed text-base sm:text-lg font-bold text-neutral-900">
+                  {editingNews ? t('editNewsTitle') : t('addNewsTitle')}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsNewsModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveNews} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+              {newsError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
+                  {newsError}
+                </div>
+              )}
+
+              {/* Category & Badge Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    {t('categoryLabel')} *
+                  </label>
+                  <select
+                    value={newsCategory}
+                    onChange={e => setNewsCategory(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  >
+                    <option value="vacancy">{t('categoryVacancy')}</option>
+                    <option value="notice">{t('categoryNotice')}</option>
+                    <option value="tender">{t('categoryTender')}</option>
+                    <option value="general">{t('categoryGeneral')}</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    Badge Text (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={locale === 'si' ? newsBadgeSi : newsBadgeEn}
+                    onChange={e => {
+                      if (locale === 'si') setNewsBadgeSi(e.target.value);
+                      else setNewsBadgeEn(e.target.value);
+                    }}
+                    placeholder={locale === 'si' ? 'උදා: රැකියා ඇබෑර්තු / විශේෂ' : 'e.g. Job Vacancy / Urgent'}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                </div>
+              </div>
+
+              {/* Title Fields */}
+              <div className="space-y-3 pt-1">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    {t('newsTitleSi')} *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newsTitleSi}
+                    onChange={e => setNewsTitleSi(e.target.value)}
+                    placeholder="උදා: බර වාහන රියදුරු පුරප්පාඩු සඳහා අයදුම්පත් කැඳවීම"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    {t('newsTitleEn')}
+                  </label>
+                  <input
+                    type="text"
+                    value={newsTitleEn}
+                    onChange={e => setNewsTitleEn(e.target.value)}
+                    placeholder="e.g. Call for Applications: Heavy Vehicle Driver Vacancies"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                </div>
+              </div>
+
+              {/* Description Fields */}
+              <div className="space-y-3 pt-1">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    {t('newsDescSi')} *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={newsDescSi}
+                    onChange={e => setNewsDescSi(e.target.value)}
+                    placeholder="අවශ්‍ය සුදුසුකම්, වැටුප් විස්තර සහ අයදුම් කළ යුතු ආකාරය ඇතුළු සම්පූර්ණ විස්තරය මෙහි ලියන්න..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] leading-relaxed font-sans"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    {t('newsDescEn')}
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={newsDescEn}
+                    onChange={e => setNewsDescEn(e.target.value)}
+                    placeholder="Full notice requirements, benefits, and application guidelines in English..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] leading-relaxed font-sans"
+                  />
+                </div>
+              </div>
+
+              {/* Image Upload Area */}
+              <div className="space-y-2 pt-2 border-t border-neutral-100">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('imageUploadLabel')}
+                </label>
+                
+                {newsImagePreview && (
+                  <div className="relative w-full h-36 rounded-xl bg-slate-100 overflow-hidden border border-neutral-200">
+                    <Image
+                      src={newsImagePreview}
+                      alt="Notice preview"
+                      fill
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewsImageFile(null);
+                        setNewsImagePreview(null);
+                        setNewsImageUrlInput('');
+                      }}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-2 items-center">
+                  <label className="flex-1 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 text-xs font-semibold cursor-pointer border border-neutral-200 border-dashed transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>Choose Image File (.jpg, .png, .webp)</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleNewsImageChange}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newsImageUrlInput}
+                    onChange={e => {
+                      setNewsImageUrlInput(e.target.value);
+                      if (e.target.value.trim()) setNewsImagePreview(e.target.value.trim());
+                    }}
+                    placeholder="or enter image path / URL"
+                    className="flex-1 w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                </div>
+              </div>
+
+              {/* Toggles: Pin and Publish */}
+              <div className="pt-2 border-t border-neutral-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-neutral-700">
+                  <input
+                    type="checkbox"
+                    checked={newsIsPinned}
+                    onChange={e => setNewsIsPinned(e.target.checked)}
+                    className="rounded text-[#003399] focus:ring-0 w-4 h-4"
+                  />
+                  <span>{t('isPinnedLabel')}</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-neutral-700">
+                  <input
+                    type="checkbox"
+                    checked={newsIsPublished}
+                    onChange={e => setNewsIsPublished(e.target.checked)}
+                    className="rounded text-emerald-700 focus:ring-0 w-4 h-4"
+                  />
+                  <span>{t('isPublishedLabel')}</span>
+                </label>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="pt-4 border-t border-neutral-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsNewsModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  {t('cancel')}
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSavingNews}
+                  className="px-5 py-2.5 rounded-xl bg-[#003399] hover:bg-[#002266] text-white text-xs font-bold transition-colors cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{isSavingNews ? 'Saving...' : (editingNews ? t('saveChanges') : t('addNewsBtn'))}</span>
+                </button>
+              </div>
+
             </form>
           </div>
         </div>
