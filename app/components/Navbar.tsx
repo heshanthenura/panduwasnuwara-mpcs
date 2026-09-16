@@ -68,85 +68,85 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 z-50 w-full bg-[#0f1115] text-white shadow-md font-sans">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-20 gap-3 xl:gap-6">
 
           {/* Logo & Brand */}
-          <Link href={`/${locale}`} className="flex items-center gap-3 sm:gap-4 group">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0 border border-white/20">
+          <Link href={`/${locale}`} className="flex items-center gap-2.5 sm:gap-3.5 group shrink min-w-0">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0 border border-white/20">
               <Image
                 src="/logo-photo.jpg"
                 alt="MPCS Logo"
-                width={48}
-                height={48}
+                width={44}
+                height={44}
                 className="object-cover"
               />
             </div>
-            <span className="font-semibold tracking-wide text-xs sm:text-sm md:text-base hidden sm:block max-w-[280px] lg:max-w-none leading-tight group-hover:text-neutral-200 transition-colors">
+            <span className="font-semibold tracking-wide text-xs sm:text-sm lg:text-[13px] xl:text-sm hidden sm:block max-w-[190px] sm:max-w-[220px] lg:max-w-[210px] xl:max-w-[270px] 2xl:max-w-none leading-snug group-hover:text-neutral-200 transition-colors">
               {t('title')}
             </span>
           </Link>
 
           {/* Desktop navigation */}
-          <div className="hidden lg:flex items-center space-x-7 text-sm font-medium">
+          <div className="hidden lg:flex items-center gap-3.5 xl:gap-5 2xl:gap-7 text-xs xl:text-sm font-medium whitespace-nowrap shrink-0">
             <Link
               href={`/${locale}`}
-              className="hover:text-gray-300 transition-colors duration-200"
+              className="hover:text-gray-300 transition-colors duration-200 py-1"
             >
               {t('home')}
             </Link>
 
             <Link
               href={`/${locale}#businesses`}
-              className="hover:text-gray-300 transition-colors duration-200"
+              className="hover:text-gray-300 transition-colors duration-200 py-1"
             >
               {t('businesses')}
             </Link>
 
             <Link
               href={`/${locale}#membership`}
-              className="hover:text-gray-300 transition-colors duration-200"
+              className="hover:text-gray-300 transition-colors duration-200 py-1"
             >
               {t('membership')}
             </Link>
 
             <Link
               href={`/${locale}#gallery`}
-              className="hover:text-gray-300 transition-colors duration-200"
+              className="hover:text-gray-300 transition-colors duration-200 py-1"
             >
               {t('gallery')}
             </Link>
 
             <Link
               href={`/${locale}#news`}
-              className="hover:text-gray-300 transition-colors duration-200"
+              className="hover:text-gray-300 transition-colors duration-200 py-1"
             >
               {t('news')}
             </Link>
 
             <Link
               href={`/${locale}#contact`}
-              className="hover:text-gray-300 transition-colors duration-200"
+              className="hover:text-gray-300 transition-colors duration-200 py-1"
             >
               {t('contact')}
             </Link>
           </div>
 
           {/* Desktop Auth Controls */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
             {auth.isAuthenticated ? (
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 {auth.isAdmin ? (
                   <Link
                     href={`/${locale}/admin`}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-[#003399] text-white text-xs font-medium shadow-xs transition-colors border border-neutral-700"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-[#003399] text-white text-xs font-medium shadow-xs transition-colors border border-neutral-700 whitespace-nowrap"
                   >
                     <ShieldCheck className="w-3.5 h-3.5 text-neutral-300" />
                     <span>{t('dashboard')}</span>
                   </Link>
                 ) : (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-neutral-200">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-neutral-200 whitespace-nowrap">
                     <UserIcon className="w-3.5 h-3.5 text-neutral-300" />
-                    <span className="font-medium max-w-[120px] truncate">
+                    <span className="font-medium max-w-[110px] truncate">
                       {auth.user?.fullName || auth.user?.nic}
                     </span>
                   </div>
@@ -164,14 +164,14 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   href={`/${locale}/login`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 text-xs font-bold transition-all shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 text-xs font-bold transition-all shadow-xs whitespace-nowrap"
                 >
                   <LogIn className="w-3.5 h-3.5 text-[#003399]" />
                   <span>{t('signIn')}</span>
                 </Link>
                 <Link
                   href={`/${locale}/register`}
-                  className="inline-flex items-center px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors border border-white/15"
+                  className="inline-flex items-center px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors border border-white/15 whitespace-nowrap"
                 >
                   <span>{t('register')}</span>
                 </Link>
@@ -180,10 +180,10 @@ export default function Navbar() {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          <div className="lg:hidden flex items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-white hover:text-gray-300 focus:outline-none transition-colors p-2"
+              className="text-white hover:text-gray-300 focus:outline-none transition-colors p-2 cursor-pointer"
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
             >
               {isOpen ? (
@@ -203,7 +203,7 @@ export default function Navbar() {
 
       {/* Mobile drawer */}
       {isOpen && (
-        <div className="md:hidden w-full bg-[#1a1d24] border-t border-gray-800">
+        <div className="lg:hidden w-full bg-[#1a1d24] border-t border-gray-800">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 pb-5 space-y-2 text-sm font-medium flex flex-col">
             <Link
               href={`/${locale}`}
