@@ -284,5 +284,29 @@
     "deleteGalleryConfirm": "Are you sure you want to delete this gallery photo? This will also remove its likes and comments.",
     "galleryImageLabel": "Gallery Photo",
     "galleryImageHint": "Upload image file (.jpg, .png, .webp) or enter image URL"
+  },
+  "RuralBank": {
+    "eyebrow": "Banking & Financial Services",
+    "heroTitle": "Co-operative Rural Bank Network",
+    "heroSubtitle": "Empowering households and local enterprise across 22 branches in Panduwasnuwara with trusted savings, secure fixed deposits, and fast micro-credit.",
+    "badgeBranches": "22 Active Branches",
+    "badgeYears": "48+ Years of Trust",
+    "badgeOwnership": "100% Member Owned",
+    "servicesTitle": "Our Banking Services",
+    "servicesSubtitle": "Member-first financial solutions tailored to help you save with high yields and borrow with ease",
+    "branchesTitle": "Branch Network & Contacts",
+    "branchesSubtitle": "Connect directly with our 22 branch managers across the Panduwasnuwara region",
+    "searchPlaceholder": "Search by branch name, manager, or hotline...",
+    "branchCol": "Bank Branch",
+    "managerCol": "Branch Manager",
+    "hotlineCol": "Direct Hotline",
+    "callNow": "Call Now",
+    "ctaTitle": "Become a Member of Panduwasnuwara MPCS",
+    "ctaSubtitle": "Open your rural bank account and unlock exclusive cooperative loans, welfare programs, and dividend benefits today.",
+    "ctaButton": "Become a Member",
+    "backHome": "Back to Home",
+    "totalBranches": "22 Branches Serving Panduwasnuwara",
+    "noBranchesFound": "No branches found matching your search.",
+    "visitBranchPage": "Explore Rural Bank Page"
   }
 }
