@@ -109,23 +109,38 @@ export const SCHEMA_DEFINITIONS = {
   `
 };
 
-export async function initDatabaseSchema(): Promise<void> {
-  // 1. Create base tables
-  await query(SCHEMA_DEFINITIONS.users);
-  await query(SCHEMA_DEFINITIONS.adminUsers);
-  await query(SCHEMA_DEFINITIONS.galleryPosts);
-  await query(SCHEMA_DEFINITIONS.galleryLikes);
-  await query(SCHEMA_DEFINITIONS.galleryComments);
-  await query(SCHEMA_DEFINITIONS.settings);
-  await query(SCHEMA_DEFINITIONS.importedMembers);
-  await query(SCHEMA_DEFINITIONS.eligibleVoters);
-  await query(SCHEMA_DEFINITIONS.businesses);
-  await query(SCHEMA_DEFINITIONS.newsAnnouncements);
+let isInitialized = false;
+let initPromise: Promise<void> | null = null;
 
-  // 2. Apply incremental schema alterations
-  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(150);`);
-  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nic VARCHAR(50);`);
-  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);`);
-  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
-  await query(`CREATE UNIQUE INDEX IF NOT EXISTS users_nic_unique ON users(LOWER(nic)) WHERE nic IS NOT NULL;`);
+export async function initDatabaseSchema(): Promise<void> {
+  if (isInitialized) return;
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    try {
+      // 1. Create base tables
+      await query(SCHEMA_DEFINITIONS.users);
+      await query(SCHEMA_DEFINITIONS.adminUsers);
+      await query(SCHEMA_DEFINITIONS.galleryPosts);
+      await query(SCHEMA_DEFINITIONS.galleryLikes);
+      await query(SCHEMA_DEFINITIONS.galleryComments);
+      await query(SCHEMA_DEFINITIONS.settings);
+      await query(SCHEMA_DEFINITIONS.importedMembers);
+      await query(SCHEMA_DEFINITIONS.eligibleVoters);
+      await query(SCHEMA_DEFINITIONS.businesses);
+      await query(SCHEMA_DEFINITIONS.newsAnnouncements);
+
+      // 2. Apply incremental schema alterations
+      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(150);`);
+      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nic VARCHAR(50);`);
+      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);`);
+      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
+      await query(`CREATE UNIQUE INDEX IF NOT EXISTS users_nic_unique ON users(LOWER(nic)) WHERE nic IS NOT NULL;`);
+      isInitialized = true;
+    } finally {
+      initPromise = null;
+    }
+  })();
+
+  return initPromise;
 }

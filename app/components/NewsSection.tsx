@@ -196,6 +196,7 @@ export default function NewsSection() {
                         src={pinnedNotice.image_url}
                         alt={locale === 'si' ? pinnedNotice.title_si : pinnedNotice.title_en}
                         fill
+                        sizes="(max-width: 1024px) 100vw, 50vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                         priority
                       />
@@ -399,6 +400,7 @@ export default function NewsSection() {
                   src={selectedNotice.image_url}
                   alt={locale === 'si' ? selectedNotice.title_si : selectedNotice.title_en}
                   fill
+                  sizes="(max-width: 768px) 100vw, 672px"
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
