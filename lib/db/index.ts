@@ -15,7 +15,7 @@ export const pool =
     ssl: {
       rejectUnauthorized: false
     },
-    max: 10,
+    max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000
   });
@@ -28,13 +28,8 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: unknown[]
 ): Promise<T[]> {
-  const client: PoolClient = await pool.connect();
-  try {
-    const res = await client.query<T>(text, params);
-    return res.rows;
-  } finally {
-    client.release();
-  }
+  const res = await pool.query<T>(text, params);
+  return res.rows;
 }
 
 export async function getClient(): Promise<PoolClient> {
