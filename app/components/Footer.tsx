@@ -107,9 +107,15 @@ export default function Footer() {
 
             <ul className="space-y-2.5 text-xs font-medium">
               <li>
-                <Link href="/" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                <Link href={`/${locale}`} className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
                   <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkHome')}</span>
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/rural-bank`} className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
+                  <span>{locale === 'si' ? 'ග්‍රාමීය බැංකු සේවා' : 'Rural Banking'}</span>
                 </Link>
               </li>
               <li>

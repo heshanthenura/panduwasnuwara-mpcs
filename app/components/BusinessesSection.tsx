@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { 
   ArrowRight, 
@@ -528,12 +529,23 @@ export default function BusinessesSection() {
                   </a>
                 </div>
 
-                <button
-                  onClick={() => setSelectedBusiness(null)}
-                  className="px-6 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors cursor-pointer shadow-xs"
-                >
-                  {t('close')}
-                </button>
+                <div className="flex items-center gap-2">
+                  {selectedBusiness.key === 'rural-bank' && (
+                    <Link
+                      href={`/${locale}/rural-bank`}
+                      className="px-4 py-2 text-xs font-semibold text-white bg-[#003399] hover:bg-[#002266] rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-xs"
+                    >
+                      <span>{isSi ? 'ග්‍රාමීය බැංකු පිටුව' : 'Explore Rural Bank'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => setSelectedBusiness(null)}
+                    className="px-5 py-2 text-xs font-semibold text-neutral-700 bg-slate-200/80 hover:bg-slate-300 rounded-xl transition-colors cursor-pointer shadow-xs"
+                  >
+                    {t('close')}
+                  </button>
+                </div>
               </div>
 
             </div>
