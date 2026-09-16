@@ -106,6 +106,39 @@ export const SCHEMA_DEFINITIONS = {
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
+  `,
+  inquiries: `
+    CREATE TABLE IF NOT EXISTS inquiries (
+      id SERIAL PRIMARY KEY,
+      business_key VARCHAR(64) NOT NULL,
+      business_name VARCHAR(150) NOT NULL,
+      user_id INT REFERENCES users(id) ON DELETE SET NULL,
+      user_name VARCHAR(150) NOT NULL,
+      phone VARCHAR(50) NOT NULL,
+      email VARCHAR(255),
+      subject VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      status VARCHAR(32) DEFAULT 'unread',
+      admin_notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  businessServices: `
+    CREATE TABLE IF NOT EXISTS business_services (
+      id SERIAL PRIMARY KEY,
+      business_key VARCHAR(64) NOT NULL,
+      title_si VARCHAR(255) NOT NULL,
+      title_en VARCHAR(255) NOT NULL,
+      desc_si TEXT,
+      desc_en TEXT,
+      features_si JSONB DEFAULT '[]'::jsonb,
+      features_en JSONB DEFAULT '[]'::jsonb,
+      display_order INT DEFAULT 0,
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `
 };
 
@@ -129,6 +162,8 @@ export async function initDatabaseSchema(): Promise<void> {
       await query(SCHEMA_DEFINITIONS.eligibleVoters);
       await query(SCHEMA_DEFINITIONS.businesses);
       await query(SCHEMA_DEFINITIONS.newsAnnouncements);
+      await query(SCHEMA_DEFINITIONS.inquiries);
+      await query(SCHEMA_DEFINITIONS.businessServices);
 
       // 2. Apply incremental schema alterations
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(150);`);
@@ -136,6 +171,9 @@ export async function initDatabaseSchema(): Promise<void> {
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);`);
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
       await query(`CREATE UNIQUE INDEX IF NOT EXISTS users_nic_unique ON users(LOWER(nic)) WHERE nic IS NOT NULL;`);
+      await query(`CREATE INDEX IF NOT EXISTS idx_inquiries_business_key ON inquiries(business_key);`);
+      await query(`CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);`);
+      await query(`CREATE INDEX IF NOT EXISTS idx_business_services_key ON business_services(business_key);`);
       isInitialized = true;
     } finally {
       initPromise = null;

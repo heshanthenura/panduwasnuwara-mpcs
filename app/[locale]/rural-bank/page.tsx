@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
@@ -15,14 +15,17 @@ import {
   PiggyBank, 
   Coins, 
   TrendingUp, 
-  Sparkles, 
+  Gem, 
   HeartHandshake, 
   CalendarCheck,
   ChevronRight,
   Home,
-  UserPlus
+  UserPlus,
+  HelpCircle
 } from 'lucide-react';
 import { ruralBankBranches, RuralBankBranch } from '@/lib/data/ruralBankBranches';
+import InquiryForm from '@/app/components/InquiryForm';
+import { BusinessServiceItem } from '@/lib/types';
 
 export default function RuralBankPage() {
   const t = useTranslations('RuralBank');
@@ -30,6 +33,24 @@ export default function RuralBankPage() {
   const isSi = locale === 'si';
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [dynamicServices, setDynamicServices] = useState<BusinessServiceItem[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchServices() {
+      try {
+        const res = await fetch('/api/admin/services?businessKey=rural-bank');
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.services) && data.services.length > 0) {
+          setDynamicServices(data.services);
+        }
+      } catch (err) {
+        console.error('Error fetching bank services:', err);
+      }
+    }
+    fetchServices();
+    return () => { isMounted = false; };
+  }, []);
 
   // Filter 22 branches based on search query
   const filteredBranches = ruralBankBranches.filter((branch: RuralBankBranch) => {
@@ -45,7 +66,7 @@ export default function RuralBankPage() {
     );
   });
 
-  // 6 Primary Banking Services
+  // 6 Primary Banking Services (default static baseline)
   const bankingServices = [
     {
       icon: PiggyBank,
@@ -75,7 +96,7 @@ export default function RuralBankPage() {
       featuresSi: ['පැය 24ක් තුළ කඩිනම් අනුමැතිය', 'අවම ලියකියවිලි', 'පහසු දෛනික ආපසු ගෙවීම්']
     },
     {
-      icon: Sparkles,
+      icon: Gem,
       titleEn: 'Gold Pawning & Jewellery Loans',
       titleSi: 'රන් වටිකර ණය පහසුකම්',
       descEn: 'Confidential and highly secure gold pawning facilities with maximum valuation and lowest approved interest rates.',
@@ -102,6 +123,18 @@ export default function RuralBankPage() {
       featuresSi: ['ශාඛා 22 අතරම සේවා ප්‍රවේශය', 'සැඟවුණු ගාස්තු නොමැත', 'SMS පණිවිඩ මඟින් තහවුරු කිරීම']
     }
   ];
+
+  const renderedServices = dynamicServices.length > 0
+    ? dynamicServices.map((ds, idx) => ({
+        icon: bankingServices[idx % bankingServices.length]?.icon || PiggyBank,
+        titleEn: ds.title_en,
+        titleSi: ds.title_si,
+        descEn: ds.desc_en || '',
+        descSi: ds.desc_si || '',
+        featuresEn: ds.features_en || [],
+        featuresSi: ds.features_si || []
+      }))
+    : bankingServices;
 
   return (
     <div className="w-full bg-[#f8fafc] font-sans">
@@ -136,16 +169,16 @@ export default function RuralBankPage() {
             <span className="text-amber-400 font-semibold">{isSi ? 'ග්‍රාමීය බැංකුව' : 'Rural Bank'}</span>
           </nav>
 
-          {/* Eyebrow Pill */}
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-wider">
-              <Building2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>{t('eyebrow')}</span>
+          {/* Eyebrow */}
+          <div className="inline-flex items-center gap-2 mx-auto">
+            <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-xs sm:text-sm font-bold tracking-wider uppercase text-amber-300">
+              {t('eyebrow')}
             </span>
           </div>
 
           {/* Prominent Headline */}
-          <h1 className="font-condensed text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight max-w-4xl mx-auto drop-shadow-md">
+          <h1 className="font-condensed text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-snug sm:leading-tight max-w-4xl mx-auto drop-shadow-md pt-1">
             {t('heroTitle')}
           </h1>
 
@@ -178,9 +211,13 @@ export default function RuralBankPage() {
       <section id="services" className="w-full py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
         {/* Section Header */}
         <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <span className="text-xs font-bold tracking-widest text-[#003399] uppercase bg-blue-50 px-3.5 py-1 rounded-full border border-blue-100">
-            {isSi ? 'මූල්‍ය විසඳුම්' : 'Financial Solutions'}
-          </span>
+          <div className="inline-flex items-center gap-2.5 mx-auto">
+            <span className="w-5 h-[2px] bg-[#003399]/40 rounded-full shrink-0" />
+            <span className="text-xs sm:text-sm font-bold tracking-wider text-[#003399] uppercase">
+              {isSi ? 'මූල්‍ය විසඳුම්' : 'Financial Solutions'}
+            </span>
+            <span className="w-5 h-[2px] bg-[#003399]/40 rounded-full shrink-0" />
+          </div>
           <h2 className="font-condensed text-2xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight">
             {t('servicesTitle')}
           </h2>
@@ -189,9 +226,9 @@ export default function RuralBankPage() {
           </p>
         </div>
 
-        {/* Services Grid (6 Clean Attractive Cards) */}
+        {/* Services Grid (Clean Attractive Cards) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
-          {bankingServices.map((svc, idx) => {
+          {renderedServices.map((svc, idx) => {
             const IconComponent = svc.icon;
             return (
               <div
@@ -243,9 +280,12 @@ export default function RuralBankPage() {
           {/* Section Heading & Search Filter Bar */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 border-b border-neutral-200/80 pb-6">
             <div className="space-y-2 max-w-xl">
-              <span className="text-xs font-bold tracking-widest text-[#003399] uppercase bg-blue-50 px-3.5 py-1 rounded-full border border-blue-100">
-                {t('totalBranches')}
-              </span>
+              <div className="flex items-center gap-2.5">
+                <span className="w-1.5 h-4 bg-[#003399] rounded-full shrink-0" />
+                <span className="text-xs sm:text-sm font-bold tracking-wider text-[#003399] uppercase">
+                  {t('totalBranches')}
+                </span>
+              </div>
               <h2 className="font-condensed text-2xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight">
                 {t('branchesTitle')}
               </h2>
@@ -371,8 +411,8 @@ export default function RuralBankPage() {
                   </p>
                 </div>
 
-                {/* Primary CTA Button to Registration Page */}
-                <div className="shrink-0 w-full sm:w-auto">
+                {/* Primary CTA Buttons */}
+                <div className="shrink-0 w-full sm:w-auto flex flex-col sm:flex-row items-center gap-3">
                   <Link
                     href={`/${locale}/register`}
                     className="inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-8 py-4 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm sm:text-base transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer font-sans"
@@ -381,6 +421,14 @@ export default function RuralBankPage() {
                     <span>{t('ctaButton')}</span>
                     <ArrowRight className="w-4 h-4 text-slate-950" />
                   </Link>
+
+                  <InquiryForm
+                    businessKey="rural-bank"
+                    businessNameEn="Rural Bank"
+                    businessNameSi="ග්‍රාමීය බැංකුව"
+                    buttonLabel={isSi ? 'විමසීමක් යොමු කරන්න' : 'Send Inquiry'}
+                    buttonClassName="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm sm:text-base border border-white/20 transition-all duration-200 backdrop-blur-md cursor-pointer"
+                  />
                 </div>
               </div>
             </div>

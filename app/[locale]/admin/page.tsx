@@ -33,9 +33,28 @@ import {
   Pin,
   Tag,
   Eye,
-  EyeOff
+  EyeOff,
+  Inbox,
+  Briefcase,
+  Mail,
+  CheckCheck,
+  CheckCircle2,
+  ExternalLink
 } from 'lucide-react';
-import { User, GalleryPost, NewsAnnouncement } from '@/lib/types';
+import { User, GalleryPost, NewsAnnouncement, Inquiry, BusinessServiceItem } from '@/lib/types';
+import { businessesData } from '@/app/components/BusinessesSection';
+
+const BUSINESS_CATEGORIES = [
+  { key: 'rural-bank', titleEn: 'Rural Bank', titleSi: 'ග්‍රාමීය බැංකුව' },
+  { key: 'consumer', titleEn: 'Consumer Section', titleSi: 'පාරිභෝගික අංශය' },
+  { key: 'fuel-station', titleEn: 'Fuel Station', titleSi: 'ඉන්ධන පිරවුම්හල' },
+  { key: 'maliban-biscuits', titleEn: 'Maliban Biscuits Agency', titleSi: 'මාලිබන් බිස්කට් නියෝජිතායතනය' },
+  { key: 'maliban-kiri', titleEn: 'Maliban Milk Agency', titleSi: 'මාලිබන් කිරි නියෝජිතායතනය' },
+  { key: 'nature-secrets', titleEn: "Nature's Secrets Agency", titleSi: 'නේචර්ස් සීක්‍රට්ස් නියෝජිතායතනය' },
+  { key: 'hemas', titleEn: 'Hemas Agency', titleSi: 'හෙමාස් නියෝජිතායතනය' },
+  { key: 'ristbury-tiara', titleEn: 'Ristbury Tiara Agency', titleSi: 'රිස්ට්බරි ටියාරා නියෝජිතායතනය' },
+  { key: 'funeral', titleEn: 'Funeral Services Section', titleSi: 'අවමංගල්‍ය සේවා අංශය' }
+];
 
 const getAspectRatioStyle = (ratio?: string): string => {
   switch (ratio) {
@@ -52,7 +71,7 @@ export default function AdminDashboardPage() {
   const locale = useLocale();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<'users' | 'metrics' | 'news' | 'gallery' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'metrics' | 'news' | 'gallery' | 'messages' | 'services' | 'settings'>('users');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -126,15 +145,43 @@ export default function AdminDashboardPage() {
   const [isSavingUser, setIsSavingUser] = useState(false);
   const [userError, setUserError] = useState('');
 
+  // Messages / Inquiries State
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [inquiryCategoryCounts, setInquiryCategoryCounts] = useState<{ business_key: string; count: number; unread_count: number }[]>([]);
+  const [selectedInquiryCategory, setSelectedInquiryCategory] = useState<string>('all');
+  const [inquirySearchQuery, setInquirySearchQuery] = useState('');
+  const [inquiryStatusFilter, setInquiryStatusFilter] = useState<'all' | 'unread' | 'read' | 'replied'>('all');
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+  const [adminNotesInput, setAdminNotesInput] = useState('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+
+  // Business Services State
+  const [allServices, setAllServices] = useState<BusinessServiceItem[]>([]);
+  const [selectedBusinessForServices, setSelectedBusinessForServices] = useState<string>('rural-bank');
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [editingService, setEditingService] = useState<BusinessServiceItem | null>(null);
+  const [serviceTitleSi, setServiceTitleSi] = useState('');
+  const [serviceTitleEn, setServiceTitleEn] = useState('');
+  const [serviceDescSi, setServiceDescSi] = useState('');
+  const [serviceDescEn, setServiceDescEn] = useState('');
+  const [serviceFeaturesSi, setServiceFeaturesSi] = useState('');
+  const [serviceFeaturesEn, setServiceFeaturesEn] = useState('');
+  const [serviceDisplayOrder, setServiceDisplayOrder] = useState('0');
+  const [serviceIsActive, setServiceIsActive] = useState(true);
+  const [isSavingService, setIsSavingService] = useState(false);
+  const [serviceError, setServiceError] = useState('');
+
   const loadAdminData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [usersRes, galleryRes, settingsRes, statsRes, newsRes] = await Promise.all([
+      const [usersRes, galleryRes, settingsRes, statsRes, newsRes, inquiriesRes, servicesRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/gallery'),
         fetch('/api/admin/settings'),
         fetch('/api/stats'),
-        fetch('/api/admin/news')
+        fetch('/api/admin/news'),
+        fetch('/api/inquiries'),
+        fetch('/api/admin/services')
       ]);
 
       const usersData = await usersRes.json();
@@ -142,10 +189,19 @@ export default function AdminDashboardPage() {
       const settingsData = await settingsRes.json();
       const statsData = await statsRes.json();
       const newsData = await newsRes.json();
+      const inquiriesData = await inquiriesRes.json();
+      const servicesData = await servicesRes.json();
 
       if (usersData.success) setUsers(usersData.users);
       if (galleryData.success) setGalleryPosts(galleryData.posts);
       if (newsData.success && Array.isArray(newsData.news)) setNewsList(newsData.news);
+      if (inquiriesData.success) {
+        setInquiries(inquiriesData.inquiries || []);
+        setInquiryCategoryCounts(inquiriesData.categoryCounts || []);
+      }
+      if (servicesData.success) {
+        setAllServices(servicesData.services || []);
+      }
       if (settingsData.success) {
         if (settingsData.settings?.recoveryWhatsAppNumber) {
           setWhatsappNumber(settingsData.settings.recoveryWhatsAppNumber);
@@ -668,6 +724,200 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Open Inquiry Details & Auto Mark Read
+  const handleSelectInquiry = async (item: Inquiry) => {
+    setSelectedInquiry(item);
+    setAdminNotesInput(item.admin_notes || '');
+
+    if (item.status === 'unread') {
+      try {
+        const res = await fetch(`/api/inquiries/${item.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'read' })
+        });
+        const data = await res.json();
+        if (data.success && data.inquiry) {
+          setInquiries(prev => prev.map(i => i.id === item.id ? data.inquiry : i));
+          setSelectedInquiry(data.inquiry);
+        }
+      } catch (err) {
+        console.error('Error auto-marking inquiry as read:', err);
+      }
+    }
+  };
+
+  // Update Inquiry Status
+  const handleUpdateInquiryStatus = async (id: number, status: 'unread' | 'read' | 'replied') => {
+    try {
+      const res = await fetch(`/api/inquiries/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (data.success && data.inquiry) {
+        setInquiries(prev => prev.map(i => i.id === id ? data.inquiry : i));
+        if (selectedInquiry?.id === id) {
+          setSelectedInquiry(data.inquiry);
+        }
+      }
+    } catch (err) {
+      console.error('Error updating inquiry status:', err);
+    }
+  };
+
+  // Save Admin Notes on Inquiry
+  const handleSaveAdminNotes = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInquiry) return;
+    setIsSavingNotes(true);
+    try {
+      const res = await fetch(`/api/inquiries/${selectedInquiry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: selectedInquiry.status,
+          admin_notes: adminNotesInput
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.inquiry) {
+        setInquiries(prev => prev.map(i => i.id === selectedInquiry.id ? data.inquiry : i));
+        setSelectedInquiry(data.inquiry);
+      }
+    } catch (err) {
+      console.error('Error saving admin notes:', err);
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
+  // Delete Inquiry
+  const handleDeleteInquiry = async (id: number) => {
+    if (!confirm(t('deleteInquiryConfirm') || 'Are you sure you want to delete this inquiry?')) return;
+    try {
+      const res = await fetch(`/api/inquiries/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        setInquiries(prev => prev.filter(i => i.id !== id));
+        if (selectedInquiry?.id === id) {
+          setSelectedInquiry(null);
+        }
+      } else {
+        alert(data.error || 'Failed to delete inquiry');
+      }
+    } catch (err) {
+      console.error('Error deleting inquiry:', err);
+    }
+  };
+
+  // Open Add Service Modal
+  const openAddServiceModal = () => {
+    setEditingService(null);
+    setServiceTitleSi('');
+    setServiceTitleEn('');
+    setServiceDescSi('');
+    setServiceDescEn('');
+    setServiceFeaturesSi('');
+    setServiceFeaturesEn('');
+    setServiceDisplayOrder(String(allServices.filter(s => s.business_key === selectedBusinessForServices).length + 1));
+    setServiceIsActive(true);
+    setServiceError('');
+    setIsServiceModalOpen(true);
+  };
+
+  // Open Edit Service Modal
+  const openEditServiceModal = (service: BusinessServiceItem) => {
+    setEditingService(service);
+    setServiceTitleSi(service.title_si || '');
+    setServiceTitleEn(service.title_en || '');
+    setServiceDescSi(service.desc_si || '');
+    setServiceDescEn(service.desc_en || '');
+    setServiceFeaturesSi((service.features_si || []).join(', '));
+    setServiceFeaturesEn((service.features_en || []).join(', '));
+    setServiceDisplayOrder(String(service.display_order ?? 0));
+    setServiceIsActive(service.is_active !== false);
+    setServiceError('');
+    setIsServiceModalOpen(true);
+  };
+
+  // Save Service (Create or Update)
+  const handleSaveService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingService(true);
+    setServiceError('');
+
+    try {
+      const featuresSiArr = serviceFeaturesSi.split(',').map(s => s.trim()).filter(Boolean);
+      const featuresEnArr = serviceFeaturesEn.split(',').map(s => s.trim()).filter(Boolean);
+
+      const payload = {
+        business_key: selectedBusinessForServices,
+        title_si: serviceTitleSi.trim(),
+        title_en: serviceTitleEn.trim(),
+        desc_si: serviceDescSi.trim() || null,
+        desc_en: serviceDescEn.trim() || null,
+        features_si: featuresSiArr,
+        features_en: featuresEnArr,
+        display_order: parseInt(serviceDisplayOrder, 10) || 0,
+        is_active: serviceIsActive
+      };
+
+      if (editingService) {
+        const res = await fetch('/api/admin/services', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingService.id, ...payload })
+        });
+        const data = await res.json();
+        if (data.success && data.service) {
+          setAllServices(prev => prev.map(s => s.id === editingService.id ? data.service : s));
+          setIsServiceModalOpen(false);
+        } else {
+          setServiceError(data.error || 'Failed to update service');
+        }
+      } else {
+        const res = await fetch('/api/admin/services', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success && data.service) {
+          setAllServices(prev => [...prev, data.service]);
+          setIsServiceModalOpen(false);
+        } else {
+          setServiceError(data.error || 'Failed to create service');
+        }
+      }
+    } catch (err: any) {
+      setServiceError(err.message || 'Error saving service');
+    } finally {
+      setIsSavingService(false);
+    }
+  };
+
+  // Delete Service
+  const handleDeleteService = async (id: number) => {
+    if (!confirm(t('deleteServiceConfirm') || 'Are you sure you want to delete this service?')) return;
+    try {
+      const res = await fetch(`/api/admin/services?id=${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAllServices(prev => prev.filter(s => s.id !== id));
+      } else {
+        alert(data.error || 'Failed to delete service');
+      }
+    } catch (err) {
+      console.error('Error deleting service:', err);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center font-sans">
@@ -860,6 +1110,59 @@ export default function AdminDashboardPage() {
 
             <button
               onClick={() => {
+                setActiveTab('messages');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'messages'
+                  ? 'bg-neutral-900 text-white shadow-xs'
+                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <MessageCircle className="w-4 h-4" />
+                <span>{t('messagesTab') || 'Messages & Inquiries'}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {inquiries.filter(i => i.status === 'unread').length > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                )}
+                <span
+                  className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${
+                    activeTab === 'messages' ? 'bg-neutral-800 text-neutral-200' : 'bg-neutral-100 text-neutral-500'
+                  }`}
+                >
+                  {inquiries.length}
+                </span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('services');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'services'
+                  ? 'bg-neutral-900 text-white shadow-xs'
+                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Briefcase className="w-4 h-4" />
+                <span>{t('servicesTab') || 'Business Services'}</span>
+              </div>
+              <span
+                className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${
+                  activeTab === 'services' ? 'bg-neutral-800 text-neutral-200' : 'bg-neutral-100 text-neutral-500'
+                }`}
+              >
+                {allServices.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => {
                 setActiveTab('settings');
                 setIsMobileSidebarOpen(false);
               }}
@@ -922,7 +1225,10 @@ export default function AdminDashboardPage() {
             <h1 className="font-condensed text-xl font-bold text-neutral-900 leading-tight">
               {activeTab === 'users' && t('usersTab')}
               {activeTab === 'metrics' && t('metricsTab')}
+              {activeTab === 'news' && t('newsTab')}
               {activeTab === 'gallery' && t('galleryTab')}
+              {activeTab === 'messages' && (t('messagesTab') || 'Messages & Inquiries')}
+              {activeTab === 'services' && (t('servicesTab') || 'Business Services')}
               {activeTab === 'settings' && t('settingsTab')}
             </h1>
             <p className="text-xs text-neutral-500">
@@ -1736,6 +2042,347 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
+        {/* TAB 5: MESSAGES / INQUIRIES */}
+        {activeTab === 'messages' && (
+          <div className="space-y-6">
+            {/* Header / Search & Category Filters */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-condensed text-lg font-bold text-neutral-900 flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5 text-[#003399]" />
+                    <span>{t('inquiriesTitle') || 'Customer Inquiries & Messages'}</span>
+                  </h2>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    {t('inquiriesSubtitle') || 'Incoming inquiries routed from business pages categorized by department'}
+                  </p>
+                </div>
+
+                {/* Search box */}
+                <div className="relative w-full md:w-80">
+                  <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={inquirySearchQuery}
+                    onChange={(e) => setInquirySearchQuery(e.target.value)}
+                    placeholder={t('searchInquiriesPlaceholder') || 'Search inquiries...'}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                </div>
+              </div>
+
+              {/* Categorized Business Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                <button
+                  onClick={() => setSelectedInquiryCategory('all')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                    selectedInquiryCategory === 'all'
+                      ? 'bg-[#003399] text-white shadow-xs'
+                      : 'bg-slate-100 text-neutral-600 hover:bg-slate-200'
+                  }`}
+                >
+                  <span>{t('allInquiries') || 'All Messages'}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    selectedInquiryCategory === 'all' ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700'
+                  }`}>
+                    {inquiries.length}
+                  </span>
+                </button>
+
+                {BUSINESS_CATEGORIES.map(cat => {
+                  const catCount = inquiryCategoryCounts.find(c => c.business_key === cat.key);
+                  const count = catCount?.count || inquiries.filter(i => i.business_key === cat.key).length;
+                  const unread = catCount?.unread_count || inquiries.filter(i => i.business_key === cat.key && i.status === 'unread').length;
+
+                  return (
+                    <button
+                      key={cat.key}
+                      onClick={() => setSelectedInquiryCategory(cat.key)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+                        selectedInquiryCategory === cat.key
+                          ? 'bg-[#003399] text-white shadow-xs'
+                          : 'bg-slate-100 text-neutral-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span>{locale === 'si' ? cat.titleSi : cat.titleEn}</span>
+                      {unread > 0 ? (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-mono animate-pulse">
+                          {unread}
+                        </span>
+                      ) : (
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                          selectedInquiryCategory === cat.key ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700'
+                        }`}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Inquiries Table / List */}
+            {inquiries.length === 0 || (
+              inquiries
+                .filter(i => selectedInquiryCategory === 'all' || i.business_key === selectedInquiryCategory)
+                .filter(i => {
+                  if (!inquirySearchQuery.trim()) return true;
+                  const q = inquirySearchQuery.toLowerCase();
+                  return (
+                    i.user_name.toLowerCase().includes(q) ||
+                    i.subject.toLowerCase().includes(q) ||
+                    i.phone.toLowerCase().includes(q) ||
+                    i.business_name.toLowerCase().includes(q) ||
+                    (i.message && i.message.toLowerCase().includes(q))
+                  );
+                }).length === 0
+            ) ? (
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-12 text-center space-y-2">
+                <Inbox className="w-10 h-10 text-neutral-300 mx-auto" />
+                <p className="text-sm font-semibold text-neutral-700">
+                  {t('noInquiriesFound') || 'No inquiries found for this category.'}
+                </p>
+                <p className="text-xs text-neutral-400">
+                  Messages submitted by customers and members will appear here automatically.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {inquiries
+                  .filter(i => selectedInquiryCategory === 'all' || i.business_key === selectedInquiryCategory)
+                  .filter(i => {
+                    if (!inquirySearchQuery.trim()) return true;
+                    const q = inquirySearchQuery.toLowerCase();
+                    return (
+                      i.user_name.toLowerCase().includes(q) ||
+                      i.subject.toLowerCase().includes(q) ||
+                      i.phone.toLowerCase().includes(q) ||
+                      i.business_name.toLowerCase().includes(q) ||
+                      (i.message && i.message.toLowerCase().includes(q))
+                    );
+                  })
+                  .map(item => {
+                    const isUnread = item.status === 'unread';
+                    const isReplied = item.status === 'replied';
+
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => handleSelectInquiry(item)}
+                        className={`group bg-white rounded-2xl border transition-all duration-200 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:shadow-md hover:border-neutral-300 ${
+                          isUnread ? 'border-blue-300 bg-blue-50/20 shadow-xs' : 'border-neutral-200/90 shadow-2xs'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                          {/* Unread dot / Status icon */}
+                          <div className="pt-0.5 shrink-0">
+                            {isUnread ? (
+                              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 block animate-pulse mt-1" />
+                            ) : isReplied ? (
+                              <CheckCheck className="w-4 h-4 text-emerald-600" />
+                            ) : (
+                              <span className="w-2 h-2 rounded-full bg-neutral-300 block mt-1" />
+                            )}
+                          </div>
+
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-neutral-900 text-sm">
+                                {item.user_name}
+                              </span>
+                              {item.user_id && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  {t('registeredUser') || 'Member'}
+                                </span>
+                              )}
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                {item.business_name}
+                              </span>
+                            </div>
+
+                            <h4 className="font-semibold text-xs sm:text-sm text-neutral-800 truncate">
+                              {item.subject}
+                            </h4>
+
+                            <p className="text-xs text-neutral-500 line-clamp-1">
+                              {item.message}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Right details & actions */}
+                        <div className="flex items-center gap-3 self-end sm:self-center shrink-0 text-xs">
+                          <div className="text-right hidden sm:block">
+                            <span className="font-mono text-[11px] text-neutral-700 font-semibold block">
+                              {item.phone}
+                            </span>
+                            <span className="text-[10px] text-neutral-400 font-mono">
+                              {new Date(item.created_at).toLocaleDateString()} {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+
+                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
+                            isUnread ? 'bg-blue-100 text-blue-800' : isReplied ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            {item.status}
+                          </span>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteInquiry(item.id);
+                            }}
+                            className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 6: BUSINESS SERVICES MANAGEMENT */}
+        {activeTab === 'services' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="font-condensed text-lg font-bold text-neutral-900 flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-[#003399]" />
+                  <span>{t('manageServicesTitle') || 'Manage Business Services'}</span>
+                </h2>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  {t('manageServicesSubtitle') || 'Add, edit, or customize offered services for each individual business page'}
+                </p>
+              </div>
+
+              <button
+                onClick={openAddServiceModal}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#003399] hover:bg-[#002266] text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{t('addServiceBtn') || 'Add New Service'}</span>
+              </button>
+            </div>
+
+            {/* Business Unit Selector Tabs */}
+            <div className="bg-white rounded-2xl border border-neutral-200/90 p-3 shadow-2xs flex items-center gap-2 overflow-x-auto custom-scrollbar">
+              {BUSINESS_CATEGORIES.map(cat => (
+                <button
+                  key={cat.key}
+                  onClick={() => setSelectedBusinessForServices(cat.key)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-2 ${
+                    selectedBusinessForServices === cat.key
+                      ? 'bg-[#003399] text-white shadow-xs'
+                      : 'bg-slate-50 text-neutral-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>{locale === 'si' ? cat.titleSi : cat.titleEn}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    selectedBusinessForServices === cat.key ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700'
+                  }`}>
+                    {allServices.filter(s => s.business_key === cat.key).length}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Services List for Selected Business */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {allServices.filter(s => s.business_key === selectedBusinessForServices).length === 0 ? (
+                <div className="col-span-full bg-white rounded-2xl border border-neutral-200 p-12 text-center space-y-2">
+                  <Briefcase className="w-10 h-10 text-neutral-300 mx-auto" />
+                  <p className="text-sm font-semibold text-neutral-700">No services added yet for this business.</p>
+                  <button
+                    onClick={openAddServiceModal}
+                    className="text-xs text-[#003399] font-bold hover:underline cursor-pointer"
+                  >
+                    Click to add the first service
+                  </button>
+                </div>
+              ) : (
+                allServices
+                  .filter(s => s.business_key === selectedBusinessForServices)
+                  .sort((a, b) => a.display_order - b.display_order)
+                  .map((svc, sIdx) => (
+                    <div
+                      key={svc.id}
+                      className="group bg-white rounded-2xl border border-neutral-200/90 shadow-2xs hover:shadow-md transition-all p-5 flex flex-col justify-between space-y-4"
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="w-8 h-8 rounded-lg bg-blue-50 text-[#003399] font-mono text-xs font-bold flex items-center justify-center border border-blue-100">
+                            {String(sIdx + 1).padStart(2, '0')}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            svc.is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
+                          }`}>
+                            {svc.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="font-condensed text-base font-bold text-neutral-900 group-hover:text-[#003399] transition-colors">
+                            {locale === 'si' ? svc.title_si : svc.title_en}
+                          </h4>
+                          <p className="text-[11px] text-neutral-400 font-medium">
+                            {locale === 'si' ? svc.title_en : svc.title_si}
+                          </p>
+                          {(svc.desc_si || svc.desc_en) && (
+                            <p className="text-xs text-neutral-600 line-clamp-2 mt-1.5 leading-relaxed">
+                              {locale === 'si' ? svc.desc_si || svc.desc_en : svc.desc_en || svc.desc_si}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Features Preview */}
+                        {((locale === 'si' ? svc.features_si : svc.features_en) || []).length > 0 && (
+                          <div className="pt-2 border-t border-neutral-100 space-y-1">
+                            {((locale === 'si' ? svc.features_si : svc.features_en) || []).map((f, fi) => (
+                              <div key={fi} className="flex items-center gap-1.5 text-[11px] text-neutral-600">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                                <span className="truncate">{f}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Action Buttons */}
+                      <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-neutral-400">
+                          Order: {svc.display_order}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => openEditServiceModal(svc)}
+                            className="p-1.5 rounded-lg text-neutral-600 hover:text-[#003399] hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Edit Service"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteService(svc.id)}
+                            className="p-1.5 rounded-lg text-neutral-600 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete Service"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        )}
+
         </div>
       </main>
 
@@ -2220,6 +2867,323 @@ export default function AdminDashboardPage() {
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>{isSavingGallery ? 'Saving...' : (editingGalleryPost ? t('saveChanges') : t('addGalleryBtn'))}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* INQUIRY DETAIL MODAL */}
+      {selectedInquiry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl border border-neutral-200 shadow-2xl max-w-xl w-full overflow-hidden relative animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-neutral-200 bg-slate-50 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-[#003399] flex items-center justify-center shrink-0">
+                  <Inbox className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-condensed text-lg font-bold text-neutral-900 leading-tight">
+                    {t('inquiryDetailTitle') || 'Inquiry Details'}
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-mono">
+                    ID #{selectedInquiry.id} • {selectedInquiry.business_name}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedInquiry(null)}
+                className="w-8 h-8 rounded-full bg-white border border-neutral-200 hover:bg-neutral-100 flex items-center justify-center text-neutral-500 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-5 text-xs text-neutral-700">
+              {/* Sender Details Grid */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-neutral-200/90 space-y-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">
+                  {t('senderDetails') || 'Sender Information'}
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-neutral-500 block text-[11px]">Full Name:</span>
+                    <strong className="text-neutral-900 font-bold text-sm">{selectedInquiry.user_name}</strong>
+                  </div>
+                  <div>
+                    <span className="text-neutral-500 block text-[11px]">Phone / WhatsApp:</span>
+                    <a href={`tel:${selectedInquiry.phone.replace(/\s+/g, '')}`} className="font-mono font-bold text-[#003399] hover:underline text-sm">
+                      {selectedInquiry.phone}
+                    </a>
+                  </div>
+                  <div>
+                    <span className="text-neutral-500 block text-[11px]">Email:</span>
+                    <span className="font-medium text-neutral-800">{selectedInquiry.email || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-neutral-500 block text-[11px]">Membership:</span>
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                      selectedInquiry.user_id ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                    }`}>
+                      {selectedInquiry.user_id ? 'Registered Member' : 'Guest'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Subject & Message Content */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">
+                  {t('subjectLabel') || 'Subject'}
+                </span>
+                <h4 className="font-bold text-sm sm:text-base text-neutral-900 bg-slate-50 p-3 rounded-xl border border-neutral-200">
+                  {selectedInquiry.subject}
+                </h4>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">
+                  {t('messageLabel') || 'Message Content'}
+                </span>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-neutral-200 leading-relaxed whitespace-pre-wrap font-normal text-neutral-800">
+                  {selectedInquiry.message}
+                </div>
+              </div>
+
+              {/* Status Update Actions */}
+              <div className="pt-2 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-neutral-500">Status:</span>
+                  <button
+                    onClick={() => handleUpdateInquiryStatus(selectedInquiry.id, 'unread')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                      selectedInquiry.status === 'unread' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-neutral-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    Unread
+                  </button>
+                  <button
+                    onClick={() => handleUpdateInquiryStatus(selectedInquiry.id, 'read')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                      selectedInquiry.status === 'read' ? 'bg-neutral-800 text-white' : 'bg-slate-100 text-neutral-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    Read
+                  </button>
+                  <button
+                    onClick={() => handleUpdateInquiryStatus(selectedInquiry.id, 'replied')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                      selectedInquiry.status === 'replied' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-neutral-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    Replied
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`tel:${selectedInquiry.phone.replace(/\s+/g, '')}`}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 font-semibold inline-flex items-center gap-1 transition-colors"
+                    title="Call Phone"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call</span>
+                  </a>
+                  <a
+                    href={`https://wa.me/${selectedInquiry.phone.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold inline-flex items-center gap-1 transition-colors"
+                    title="WhatsApp"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>WhatsApp</span>
+                  </a>
+                  {selectedInquiry.email && (
+                    <a
+                      href={`mailto:${selectedInquiry.email}?subject=Re: ${encodeURIComponent(selectedInquiry.subject)}`}
+                      className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 font-semibold inline-flex items-center gap-1 transition-colors"
+                      title="Email"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Email</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Admin Notes Form */}
+              <form onSubmit={handleSaveAdminNotes} className="space-y-2 pt-2 border-t border-neutral-100">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('adminNotesLabel') || 'Administrative Internal Notes'}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={adminNotesInput}
+                    onChange={(e) => setAdminNotesInput(e.target.value)}
+                    placeholder="Add follow-up notes, assigned officer, or status..."
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-neutral-200 text-xs focus:outline-hidden focus:border-[#003399]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSavingNotes}
+                    className="px-4 py-2 rounded-xl bg-[#003399] hover:bg-[#002266] text-white font-bold text-xs cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    {isSavingNotes ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD / EDIT BUSINESS SERVICE MODAL */}
+      {isServiceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl border border-neutral-200 shadow-2xl max-w-lg w-full overflow-hidden relative animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+            <div className="px-6 py-5 border-b border-neutral-200 bg-slate-50 flex items-center justify-between shrink-0">
+              <h3 className="font-condensed text-lg font-bold text-neutral-900">
+                {editingService ? (t('editServiceTitle') || 'Edit Service') : (t('addServiceTitle') || 'Add New Service')}
+              </h3>
+              <button
+                onClick={() => setIsServiceModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white border border-neutral-200 hover:bg-neutral-100 flex items-center justify-center text-neutral-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveService} className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+              {serviceError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                  {serviceError}
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('serviceTitleSi') || 'Service Title (Sinhala)'} *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={serviceTitleSi}
+                  onChange={(e) => setServiceTitleSi(e.target.value)}
+                  placeholder="උදා: තැන්පතු ගිණුම්"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-hidden focus:border-[#003399]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('serviceTitleEn') || 'Service Title (English)'} *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={serviceTitleEn}
+                  onChange={(e) => setServiceTitleEn(e.target.value)}
+                  placeholder="e.g. Savings Accounts"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-hidden focus:border-[#003399]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('serviceDescSi') || 'Service Description (Sinhala)'}
+                </label>
+                <textarea
+                  rows={2}
+                  value={serviceDescSi}
+                  onChange={(e) => setServiceDescSi(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-hidden focus:border-[#003399] resize-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('serviceDescEn') || 'Service Description (English)'}
+                </label>
+                <textarea
+                  rows={2}
+                  value={serviceDescEn}
+                  onChange={(e) => setServiceDescEn(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-hidden focus:border-[#003399] resize-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('serviceFeaturesSi') || 'Key Features (Sinhala, comma separated)'}
+                </label>
+                <input
+                  type="text"
+                  value={serviceFeaturesSi}
+                  onChange={(e) => setServiceFeaturesSi(e.target.value)}
+                  placeholder="ඉහළ පොලියක්, ක්ෂණික ගිණුම් විවෘත කිරීම"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-hidden focus:border-[#003399]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('serviceFeaturesEn') || 'Key Features (English, comma separated)'}
+                </label>
+                <input
+                  type="text"
+                  value={serviceFeaturesEn}
+                  onChange={(e) => setServiceFeaturesEn(e.target.value)}
+                  placeholder="High interest, Instant opening, Passbook facility"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-hidden focus:border-[#003399]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">Display Order</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={serviceDisplayOrder}
+                    onChange={(e) => setServiceDisplayOrder(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-xs font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">Status</label>
+                  <button
+                    type="button"
+                    onClick={() => setServiceIsActive(!serviceIsActive)}
+                    className={`w-full py-2 px-3 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${
+                      serviceIsActive ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-slate-100 border-neutral-200 text-neutral-500'
+                    }`}
+                  >
+                    {serviceIsActive ? 'Active' : 'Inactive'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-neutral-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsServiceModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 font-bold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingService}
+                  className="px-6 py-2 rounded-xl bg-[#003399] hover:bg-[#002266] text-white font-bold text-xs cursor-pointer shadow-xs disabled:opacity-50"
+                >
+                  {isSavingService ? 'Saving...' : 'Save Service'}
                 </button>
               </div>
             </form>
