@@ -93,3 +93,86 @@ export async function deleteGalleryComment(commentId: string): Promise<boolean> 
   const res = await query(`DELETE FROM gallery_comments WHERE id = $1 RETURNING id;`, [commentId]);
   return res.length > 0;
 }
+
+export interface CreateGalleryPostInput {
+  id?: string;
+  image_src: string;
+  aspect_ratio?: string;
+}
+
+export async function createGalleryPost(data: CreateGalleryPostInput): Promise<GalleryPost> {
+  const postId = data.id || `gallery-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  const aspectRatio = data.aspect_ratio || '4:3';
+
+  const inserted = await query<{
+    id: string;
+    image_src: string;
+    aspect_ratio: string;
+    likes_count: number;
+    created_at: string;
+  }>(`
+    INSERT INTO gallery_posts (id, image_src, aspect_ratio, likes_count)
+    VALUES ($1, $2, $3, 0)
+    RETURNING id, image_src, aspect_ratio, likes_count, created_at;
+  `, [postId, data.image_src, aspectRatio]);
+
+  const p = inserted[0];
+  return {
+    id: p.id,
+    imageSrc: p.image_src,
+    aspectRatio: p.aspect_ratio,
+    likesCount: p.likes_count,
+    hasLiked: false,
+    comments: []
+  };
+}
+
+export interface UpdateGalleryPostInput {
+  image_src?: string;
+  aspect_ratio?: string;
+}
+
+export async function updateGalleryPost(id: string, data: UpdateGalleryPostInput): Promise<GalleryPost | null> {
+  const existing = await query<{ id: string }>(`SELECT id FROM gallery_posts WHERE id = $1;`, [id]);
+  if (existing.length === 0) return null;
+
+  const updated = await query<{
+    id: string;
+    image_src: string;
+    aspect_ratio: string;
+    likes_count: number;
+    created_at: string;
+  }>(`
+    UPDATE gallery_posts
+    SET
+      image_src = COALESCE($2, image_src),
+      aspect_ratio = COALESCE($3, aspect_ratio)
+    WHERE id = $1
+    RETURNING id, image_src, aspect_ratio, likes_count, created_at;
+  `, [id, data.image_src || null, data.aspect_ratio || null]);
+
+  if (updated.length === 0) return null;
+
+  const comments = await query<GalleryComment>(`
+    SELECT id, post_id, author, text, created_at
+    FROM gallery_comments
+    WHERE post_id = $1
+    ORDER BY created_at ASC;
+  `, [id]);
+
+  const p = updated[0];
+  return {
+    id: p.id,
+    imageSrc: p.image_src,
+    aspectRatio: p.aspect_ratio,
+    likesCount: p.likes_count,
+    hasLiked: false,
+    comments
+  };
+}
+
+export async function deleteGalleryPost(id: string): Promise<boolean> {
+  const res = await query(`DELETE FROM gallery_posts WHERE id = $1 RETURNING id;`, [id]);
+  return res.length > 0;
+}
+
