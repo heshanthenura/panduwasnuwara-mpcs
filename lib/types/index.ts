@@ -49,3 +49,35 @@ export interface NewsAnnouncement {
   created_at: string;
   updated_at: string;
 }
+
+export interface Inquiry {
+  id: number;
+  business_key: string;
+  business_name: string;
+  user_id?: number | null;
+  user_name: string;
+  phone: string;
+  email?: string | null;
+  subject: string;
+  message: string;
+  status: 'unread' | 'read' | 'replied';
+  admin_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessServiceItem {
+  id: number;
+  business_key: string;
+  title_si: string;
+  title_en: string;
+  desc_si?: string | null;
+  desc_en?: string | null;
+  features_si?: string[];
+  features_en?: string[];
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
