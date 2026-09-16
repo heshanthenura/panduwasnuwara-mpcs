@@ -4,8 +4,17 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
-import { Heart, MessageSquare, Trash2, X, Send, Camera, ShieldCheck, LogOut, User } from 'lucide-react';
+import { Heart, MessageSquare, Trash2, X, Send, Camera, ShieldCheck, LogOut, User, Plus, Edit2, Upload, Check } from 'lucide-react';
 import { getClientId } from '@/lib/clientId';
+
+const getAspectClass = (ratio?: string) => {
+  switch (ratio) {
+    case '16:9': return 'aspect-16/9';
+    case '1:1': return 'aspect-square';
+    case '3:2': return 'aspect-3/2';
+    default: return 'aspect-4/3';
+  }
+};
 
 export interface GalleryComment {
   id: string;
@@ -38,6 +47,119 @@ export default function GallerySection() {
   const [commentText, setCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
+
+  // Admin Gallery CRUD State
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<GalleryPost | null>(null);
+  const [photoImageFile, setPhotoImageFile] = useState<File | null>(null);
+  const [photoImagePreview, setPhotoImagePreview] = useState<string | null>(null);
+  const [photoImageUrlInput, setPhotoImageUrlInput] = useState('');
+  const [photoAspectRatio, setPhotoAspectRatio] = useState('4:3');
+  const [photoCustomId, setPhotoCustomId] = useState('');
+  const [isSavingPhoto, setIsSavingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+
+  const openAddPhotoModal = () => {
+    setEditingPost(null);
+    setPhotoImageFile(null);
+    setPhotoImagePreview(null);
+    setPhotoImageUrlInput('');
+    setPhotoAspectRatio('4:3');
+    setPhotoCustomId('');
+    setPhotoError('');
+    setIsPhotoModalOpen(true);
+  };
+
+  const openEditPhotoModal = (post: GalleryPost, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingPost(post);
+    setPhotoImageFile(null);
+    setPhotoImagePreview(post.imageSrc);
+    setPhotoImageUrlInput(post.imageSrc);
+    setPhotoAspectRatio(post.aspectRatio || '4:3');
+    setPhotoCustomId(post.id);
+    setPhotoError('');
+    setIsPhotoModalOpen(true);
+  };
+
+  const handlePhotoImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoImageFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setPhotoImagePreview(previewUrl);
+    }
+  };
+
+  const handleSavePhoto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingPhoto(true);
+    setPhotoError('');
+
+    try {
+      const formData = new FormData();
+      if (editingPost) {
+        formData.append('id', editingPost.id);
+      } else if (photoCustomId.trim()) {
+        formData.append('id', photoCustomId.trim());
+      }
+      formData.append('aspect_ratio', photoAspectRatio);
+
+      if (photoImageFile) {
+        formData.append('image', photoImageFile);
+      } else if (photoImageUrlInput.trim()) {
+        formData.append('image_src', photoImageUrlInput.trim());
+      }
+
+      const method = editingPost ? 'PUT' : 'POST';
+      const res = await fetch('/api/gallery', {
+        method,
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success && data.post) {
+        if (editingPost) {
+          setPosts(prev =>
+            prev.map(p => (p.id === editingPost.id ? { ...p, ...data.post } : p))
+          );
+        } else {
+          setPosts(prev => [data.post, ...prev]);
+        }
+        setIsPhotoModalOpen(false);
+      } else {
+        setPhotoError(data.error || 'Failed to save photo');
+      }
+    } catch {
+      setPhotoError('Network error saving photo');
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  };
+
+  const handleDeletePhoto = async (postId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!confirm(t('deletePhotoConfirm'))) return;
+
+    try {
+      const res = await fetch('/api/gallery', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+        if (activePost && activePost.id === postId) {
+          setActivePost(null);
+        }
+      } else {
+        alert(data.error || 'Failed to delete photo');
+      }
+    } catch {
+      alert('Error deleting photo');
+    }
+  };
 
   const fetchGalleryData = async () => {
     try {
@@ -245,18 +367,28 @@ export default function GallerySection() {
           </p>
 
           {isAdmin && (
-            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 mt-2 rounded-full bg-white border border-neutral-200/90 shadow-2xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-neutral-700" />
-              <span className="text-xs font-semibold text-neutral-800 tracking-tight">
-                {t('adminBadge')}
-              </span>
-              <span className="w-px h-3.5 bg-neutral-200" />
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white border border-neutral-200/90 shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-neutral-700" />
+                <span className="text-xs font-semibold text-neutral-800 tracking-tight">
+                  {t('adminBadge')}
+                </span>
+                <span className="w-px h-3.5 bg-neutral-200" />
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer group/exit"
+                >
+                  <span>{t('logout')}</span>
+                  <LogOut className="w-3 h-3 text-neutral-400 group-hover/exit:text-neutral-700 transition-colors" />
+                </button>
+              </div>
+
               <button
-                onClick={handleLogout}
-                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer group/exit"
+                onClick={openAddPhotoModal}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#003399] hover:bg-[#002266] text-white text-xs font-bold transition-all shadow-2xs cursor-pointer"
               >
-                <span>{t('logout')}</span>
-                <LogOut className="w-3 h-3 text-neutral-400 group-hover/exit:text-neutral-700 transition-colors" />
+                <Plus className="w-3.5 h-3.5" />
+                <span>{t('addPhoto')}</span>
               </button>
             </div>
           )}
@@ -299,7 +431,7 @@ export default function GallerySection() {
               >
                 <div
                   onClick={() => setActivePost(post)}
-                  className="relative w-full aspect-4/3 overflow-hidden bg-neutral-100 cursor-pointer"
+                  className={`relative w-full ${getAspectClass(post.aspectRatio)} overflow-hidden bg-neutral-100 cursor-pointer`}
                 >
                   <Image
                     src={post.imageSrc}
@@ -308,6 +440,26 @@ export default function GallerySection() {
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover group-hover:scale-103 transition-transform duration-300"
                   />
+
+                  {/* Admin controls overlay */}
+                  {isAdmin && (
+                    <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 bg-black/60 backdrop-blur-xs p-1 rounded-xl border border-white/20 shadow-sm opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => openEditPhotoModal(post, e)}
+                        className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-neutral-800 transition-colors cursor-pointer"
+                        title={t('editPhoto')}
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeletePhoto(post.id, e)}
+                        className="p-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white transition-colors cursor-pointer"
+                        title={t('deletePhoto')}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4 sm:p-5 flex items-center justify-between border-t border-neutral-100">
@@ -360,13 +512,34 @@ export default function GallerySection() {
                 </h3>
               </div>
 
-              <button
-                onClick={() => setActivePost(null)}
-                className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-300 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <>
+                    <button
+                      onClick={() => openEditPhotoModal(activePost)}
+                      className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-800 hover:bg-slate-200 transition-colors cursor-pointer"
+                      title={t('editPhoto')}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeletePhoto(activePost.id)}
+                      className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
+                      title={t('deletePhoto')}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+
+                <button
+                  onClick={() => setActivePost(null)}
+                  className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-300 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
@@ -508,6 +681,151 @@ export default function GallerySection() {
                 {t('registerBtn')}
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Add / Edit Modal for Admin */}
+      {isPhotoModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-3xl border border-neutral-200 shadow-xl overflow-hidden p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-[#003399]" />
+                <h3 className="font-condensed text-lg font-bold text-neutral-900">
+                  {editingPost ? t('editPhoto') : t('addPhoto')}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPhotoModalOpen(false)}
+                className="p-1.5 rounded-xl text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {photoError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700">
+                {photoError}
+              </div>
+            )}
+
+            <form onSubmit={handleSavePhoto} className="space-y-4">
+              {/* Optional Custom Identifier */}
+              {!editingPost && (
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    {t('photoId')}
+                  </label>
+                  <input
+                    type="text"
+                    value={photoCustomId}
+                    onChange={e => setPhotoCustomId(e.target.value)}
+                    placeholder="e.g. AGM 2026 or leave blank for auto-id"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                </div>
+              )}
+
+              {/* Aspect Ratio Selector */}
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('aspectRatio')}
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['4:3', '16:9', '1:1', '3:2'].map(ratio => (
+                    <button
+                      key={ratio}
+                      type="button"
+                      onClick={() => setPhotoAspectRatio(ratio)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold font-mono border transition-all cursor-pointer ${
+                        photoAspectRatio === ratio
+                          ? 'bg-[#003399] text-white border-[#003399] shadow-xs'
+                          : 'bg-slate-50 text-neutral-700 border-neutral-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {ratio}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Image Preview & Upload */}
+              <div className="space-y-2 pt-1 border-t border-neutral-100">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('uploadPhoto')} {!editingPost && '*'}
+                </label>
+
+                {photoImagePreview && (
+                  <div className="relative w-full h-48 rounded-xl bg-slate-100 overflow-hidden border border-neutral-200">
+                    <Image
+                      src={photoImagePreview}
+                      alt="Photo Preview"
+                      fill
+                      sizes="(max-width: 640px) 100vw, 448px"
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhotoImageFile(null);
+                        setPhotoImagePreview(null);
+                        setPhotoImageUrlInput('');
+                      }}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-2 items-center">
+                  <label className="flex-1 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 text-xs font-semibold cursor-pointer border border-neutral-200 border-dashed transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>{t('chooseImage')}</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handlePhotoImageChange}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <input
+                    type="text"
+                    value={photoImageUrlInput}
+                    onChange={e => {
+                      setPhotoImageUrlInput(e.target.value);
+                      if (e.target.value.trim()) setPhotoImagePreview(e.target.value.trim());
+                    }}
+                    placeholder={t('imageUrlPlaceholder')}
+                    className="flex-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="pt-4 border-t border-neutral-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsPhotoModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  {t('close')}
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSavingPhoto || (!editingPost && !photoImageFile && !photoImageUrlInput.trim())}
+                  className="px-5 py-2.5 rounded-xl bg-[#003399] hover:bg-[#002266] text-white text-xs font-bold transition-colors cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{isSavingPhoto ? 'Saving...' : (editingPost ? t('savePhoto') : t('addPhoto'))}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

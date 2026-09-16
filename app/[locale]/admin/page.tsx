@@ -74,6 +74,18 @@ export default function AdminDashboardPage() {
   const [isSavingNews, setIsSavingNews] = useState(false);
   const [newsError, setNewsError] = useState('');
 
+  // Gallery Management State
+  const [gallerySearchQuery, setGallerySearchQuery] = useState('');
+  const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
+  const [editingGalleryPost, setEditingGalleryPost] = useState<GalleryPost | null>(null);
+  const [galleryImageFile, setGalleryImageFile] = useState<File | null>(null);
+  const [galleryImagePreview, setGalleryImagePreview] = useState<string | null>(null);
+  const [galleryImageUrlInput, setGalleryImageUrlInput] = useState('');
+  const [galleryAspectRatio, setGalleryAspectRatio] = useState('4:3');
+  const [galleryCustomId, setGalleryCustomId] = useState('');
+  const [isSavingGallery, setIsSavingGallery] = useState(false);
+  const [galleryError, setGalleryError] = useState('');
+
   // Live Statistics State
   const [liveStats, setLiveStats] = useState({
     membersCount: 0,
@@ -260,6 +272,108 @@ export default function AdminDashboardPage() {
       }
     } catch (err) {
       console.error('Error deleting comment:', err);
+    }
+  };
+
+  // Open Add Gallery Modal
+  const openAddGalleryModal = () => {
+    setEditingGalleryPost(null);
+    setGalleryImageFile(null);
+    setGalleryImagePreview(null);
+    setGalleryImageUrlInput('');
+    setGalleryAspectRatio('4:3');
+    setGalleryCustomId('');
+    setGalleryError('');
+    setIsGalleryModalOpen(true);
+  };
+
+  // Open Edit Gallery Modal
+  const openEditGalleryModal = (post: GalleryPost) => {
+    setEditingGalleryPost(post);
+    setGalleryImageFile(null);
+    setGalleryImagePreview(post.imageSrc);
+    setGalleryImageUrlInput(post.imageSrc);
+    setGalleryAspectRatio(post.aspectRatio || '4:3');
+    setGalleryCustomId(post.id);
+    setGalleryError('');
+    setIsGalleryModalOpen(true);
+  };
+
+  // Handle Gallery Image Selection
+  const handleGalleryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setGalleryImageFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setGalleryImagePreview(previewUrl);
+    }
+  };
+
+  // Save Gallery Item (Create or Edit)
+  const handleSaveGalleryPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingGallery(true);
+    setGalleryError('');
+
+    try {
+      const formData = new FormData();
+      if (editingGalleryPost) {
+        formData.append('id', editingGalleryPost.id);
+      } else if (galleryCustomId.trim()) {
+        formData.append('id', galleryCustomId.trim());
+      }
+      formData.append('aspect_ratio', galleryAspectRatio);
+
+      if (galleryImageFile) {
+        formData.append('image', galleryImageFile);
+      } else if (galleryImageUrlInput.trim()) {
+        formData.append('image_src', galleryImageUrlInput.trim());
+      }
+
+      const method = editingGalleryPost ? 'PUT' : 'POST';
+      const res = await fetch('/api/gallery', {
+        method,
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success && data.post) {
+        if (editingGalleryPost) {
+          setGalleryPosts(prev =>
+            prev.map(p => (p.id === editingGalleryPost.id ? { ...p, ...data.post } : p))
+          );
+        } else {
+          setGalleryPosts(prev => [data.post, ...prev]);
+        }
+        setIsGalleryModalOpen(false);
+      } else {
+        setGalleryError(data.error || 'Failed to save gallery item');
+      }
+    } catch {
+      setGalleryError('Network error saving gallery item');
+    } finally {
+      setIsSavingGallery(false);
+    }
+  };
+
+  // Delete Entire Gallery Item
+  const handleDeleteGalleryPost = async (postId: string) => {
+    if (!confirm(t('deleteGalleryConfirm'))) return;
+
+    try {
+      const res = await fetch('/api/gallery', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setGalleryPosts(prev => prev.filter(p => p.id !== postId));
+      } else {
+        alert(data.error || 'Failed to delete gallery item');
+      }
+    } catch {
+      alert('Error deleting gallery item');
     }
   };
 
@@ -1286,6 +1400,7 @@ export default function AdminDashboardPage() {
                                 src={item.image_url}
                                 alt={displayTitle}
                                 fill
+                                sizes="96px"
                                 className="object-cover"
                               />
                             ) : (
@@ -1396,68 +1511,133 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* TAB 3: GALLERY MODERATION */}
+        {/* TAB 4: GALLERY MANAGEMENT & MODERATION */}
         {activeTab === 'gallery' && (
           <div className="space-y-6">
-            {galleryPosts.map(post => (
-              <div
-                key={post.id}
-                className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Image
-                      src={post.imageSrc}
-                      alt="Post"
-                      width={64}
-                      height={48}
-                      className="w-16 h-12 rounded-xl object-cover border border-neutral-200"
-                    />
-                    <div>
-                      <h3 className="font-condensed text-sm font-bold text-neutral-900">
-                        {post.id}
-                      </h3>
-                      <p className="text-[11px] text-neutral-500 font-mono">
-                        {post.likesCount} Likes • {post.comments.length} Comments
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            {/* Gallery Toolbar */}
+            <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={gallerySearchQuery}
+                  onChange={e => setGallerySearchQuery(e.target.value)}
+                  placeholder="Search gallery posts or comments..."
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                />
+              </div>
 
-                {/* Comments List */}
-                <div className="space-y-2 border-t border-neutral-100 pt-3">
-                  <h4 className="text-xs font-bold text-neutral-700">Comments:</h4>
-                  {post.comments.length === 0 ? (
-                    <p className="text-xs text-neutral-400 italic">No comments on this post.</p>
-                  ) : (
-                    post.comments.map(comment => (
-                      <div
-                        key={comment.id}
-                        className="flex items-start justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-neutral-200/80 text-xs"
-                      >
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
-                            <strong className="text-neutral-900 font-bold">{comment.author}</strong>
-                            <span className="text-[10px] text-neutral-400">
-                              {new Date(comment.created_at).toLocaleDateString()}
+              <button
+                onClick={openAddGalleryModal}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#003399] hover:bg-[#002266] text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{t('addGalleryBtn')}</span>
+              </button>
+            </div>
+
+            {/* Gallery Posts Grid / List */}
+            {galleryPosts.length === 0 ? (
+              <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-8 text-center space-y-2">
+                <ImageIcon className="w-10 h-10 text-neutral-300 mx-auto" />
+                <p className="text-sm font-semibold text-neutral-700">No gallery items found</p>
+                <p className="text-xs text-neutral-400">Click &quot;{t('addGalleryBtn')}&quot; to upload your first photo.</p>
+              </div>
+            ) : (
+              galleryPosts
+                .filter(post => {
+                  if (!gallerySearchQuery.trim()) return true;
+                  const q = gallerySearchQuery.toLowerCase();
+                  return (
+                    post.id.toLowerCase().includes(q) ||
+                    post.comments.some(c => c.author.toLowerCase().includes(q) || c.text.toLowerCase().includes(q))
+                  );
+                })
+                .map(post => (
+                  <div
+                    key={post.id}
+                    className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-20 h-14 rounded-xl overflow-hidden border border-neutral-200 bg-slate-100 shrink-0">
+                          <Image
+                            src={post.imageSrc}
+                            alt={post.id}
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-condensed text-sm font-bold text-neutral-900">
+                              {post.id}
+                            </h3>
+                            <span className="px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600 font-mono text-[10px] font-semibold border border-neutral-200">
+                              {post.aspectRatio || '4:3'}
                             </span>
                           </div>
-                          <p className="text-neutral-700 leading-relaxed">{comment.text}</p>
+                          <p className="text-[11px] text-neutral-500 font-mono mt-0.5">
+                            {post.likesCount} Likes • {post.comments.length} Comments
+                          </p>
                         </div>
+                      </div>
 
+                      {/* Post Actions: Edit, Delete */}
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                         <button
-                          onClick={() => handleDeleteComment(comment.id)}
-                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-100 transition-colors cursor-pointer shrink-0"
-                          title="Delete Comment"
+                          onClick={() => openEditGalleryModal(post)}
+                          className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-neutral-700 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-neutral-500" />
+                          <span>{t('edit')}</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteGalleryPost(post.id)}
+                          className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
+                          <span>{t('delete')}</span>
                         </button>
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            ))}
+                    </div>
+
+                    {/* Comments List */}
+                    <div className="space-y-2 border-t border-neutral-100 pt-3">
+                      <h4 className="text-xs font-bold text-neutral-700">Comments:</h4>
+                      {post.comments.length === 0 ? (
+                        <p className="text-xs text-neutral-400 italic">No comments on this post.</p>
+                      ) : (
+                        post.comments.map(comment => (
+                          <div
+                            key={comment.id}
+                            className="flex items-start justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-neutral-200/80 text-xs"
+                          >
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <strong className="text-neutral-900 font-bold">{comment.author}</strong>
+                                <span className="text-[10px] text-neutral-400">
+                                  {new Date(comment.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-neutral-700 leading-relaxed">{comment.text}</p>
+                            </div>
+
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-100 transition-colors cursor-pointer shrink-0"
+                              title="Delete Comment"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))
+            )}
           </div>
         )}
 
@@ -1785,6 +1965,7 @@ export default function AdminDashboardPage() {
                       src={newsImagePreview}
                       alt="Notice preview"
                       fill
+                      sizes="(max-width: 640px) 100vw, 448px"
                       className="object-cover"
                     />
                     <button
@@ -1869,6 +2050,151 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
 
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* GALLERY ADD / EDIT MODAL */}
+      {isGalleryModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-3xl border border-neutral-200 shadow-xl overflow-hidden p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-[#003399]" />
+                <h3 className="font-condensed text-lg font-bold text-neutral-900">
+                  {editingGalleryPost ? t('editGalleryTitle') : t('addGalleryTitle')}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGalleryModalOpen(false)}
+                className="p-1.5 rounded-xl text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {galleryError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700">
+                {galleryError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveGalleryPost} className="space-y-4">
+              {/* Optional Custom Identifier */}
+              {!editingGalleryPost && (
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    Photo Title / Identifier (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={galleryCustomId}
+                    onChange={e => setGalleryCustomId(e.target.value)}
+                    placeholder="e.g. AGM 2026 or leave blank for auto-id"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                </div>
+              )}
+
+              {/* Aspect Ratio Selector */}
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-neutral-700">
+                  Aspect Ratio
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['4:3', '16:9', '1:1', '3:2'].map(ratio => (
+                    <button
+                      key={ratio}
+                      type="button"
+                      onClick={() => setGalleryAspectRatio(ratio)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold font-mono border transition-all cursor-pointer ${
+                        galleryAspectRatio === ratio
+                          ? 'bg-[#003399] text-white border-[#003399] shadow-xs'
+                          : 'bg-slate-50 text-neutral-700 border-neutral-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {ratio}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Image Preview & Upload */}
+              <div className="space-y-2 pt-1 border-t border-neutral-100">
+                <label className="block text-xs font-bold text-neutral-700">
+                  {t('galleryImageLabel')} {!editingGalleryPost && '*'}
+                </label>
+
+                {galleryImagePreview && (
+                  <div className="relative w-full h-48 rounded-xl bg-slate-100 overflow-hidden border border-neutral-200">
+                    <Image
+                      src={galleryImagePreview}
+                      alt="Gallery Preview"
+                      fill
+                      sizes="(max-width: 640px) 100vw, 448px"
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGalleryImageFile(null);
+                        setGalleryImagePreview(null);
+                        setGalleryImageUrlInput('');
+                      }}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-2 items-center">
+                  <label className="flex-1 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 text-xs font-semibold cursor-pointer border border-neutral-200 border-dashed transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>Choose File (.jpg, .png, .webp)</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleGalleryImageChange}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <input
+                    type="text"
+                    value={galleryImageUrlInput}
+                    onChange={e => {
+                      setGalleryImageUrlInput(e.target.value);
+                      if (e.target.value.trim()) setGalleryImagePreview(e.target.value.trim());
+                    }}
+                    placeholder="or enter image path / URL"
+                    className="flex-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="pt-4 border-t border-neutral-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsGalleryModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  {t('cancel')}
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSavingGallery || (!editingGalleryPost && !galleryImageFile && !galleryImageUrlInput.trim())}
+                  className="px-5 py-2.5 rounded-xl bg-[#003399] hover:bg-[#002266] text-white text-xs font-bold transition-colors cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{isSavingGallery ? 'Saving...' : (editingGalleryPost ? t('saveChanges') : t('addGalleryBtn'))}</span>
+                </button>
+              </div>
             </form>
           </div>
         </div>
