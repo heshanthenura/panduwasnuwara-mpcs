@@ -37,6 +37,16 @@ import {
 } from 'lucide-react';
 import { User, GalleryPost, NewsAnnouncement } from '@/lib/types';
 
+const getAspectRatioStyle = (ratio?: string): string => {
+  switch (ratio) {
+    case '16:9': return '16 / 9';
+    case '1:1': return '1 / 1';
+    case '3:2': return '3 / 2';
+    case '4:3':
+    default: return '4 / 3';
+  }
+};
+
 export default function AdminDashboardPage() {
   const t = useTranslations('Admin');
   const locale = useLocale();
@@ -1560,12 +1570,17 @@ export default function AdminDashboardPage() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <div className="relative w-20 h-14 rounded-xl overflow-hidden border border-neutral-200 bg-slate-100 shrink-0">
+                        <div
+                          className="relative h-14 rounded-xl overflow-hidden border border-neutral-200 bg-slate-100 shrink-0 shadow-2xs"
+                          style={{
+                            aspectRatio: getAspectRatioStyle(post.aspectRatio)
+                          }}
+                        >
                           <Image
                             src={post.imageSrc}
                             alt={post.id}
                             fill
-                            sizes="80px"
+                            sizes="120px"
                             className="object-cover"
                           />
                         </div>
@@ -2129,25 +2144,37 @@ export default function AdminDashboardPage() {
                 </label>
 
                 {galleryImagePreview && (
-                  <div className="relative w-full h-48 rounded-xl bg-slate-100 overflow-hidden border border-neutral-200">
-                    <Image
-                      src={galleryImagePreview}
-                      alt="Gallery Preview"
-                      fill
-                      sizes="(max-width: 640px) 100vw, 448px"
-                      className="object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setGalleryImageFile(null);
-                        setGalleryImagePreview(null);
-                        setGalleryImageUrlInput('');
+                  <div className="p-3.5 rounded-2xl bg-slate-100/80 border border-neutral-200 flex flex-col items-center justify-center">
+                    <div
+                      className="relative w-full rounded-xl bg-slate-200 overflow-hidden border border-neutral-300 shadow-xs transition-all duration-300 mx-auto"
+                      style={{
+                        aspectRatio: getAspectRatioStyle(galleryAspectRatio),
+                        maxHeight: '260px',
+                        maxWidth: galleryAspectRatio === '1:1' ? '260px' : galleryAspectRatio === '4:3' ? '340px' : galleryAspectRatio === '3:2' ? '390px' : '100%'
                       }}
-                      className="absolute top-2 right-2 p-1 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors cursor-pointer"
                     >
-                      <X className="w-4 h-4" />
-                    </button>
+                      <Image
+                        src={galleryImagePreview}
+                        alt="Gallery Preview"
+                        fill
+                        sizes="(max-width: 640px) 100vw, 448px"
+                        className="object-cover transition-all duration-300"
+                      />
+                      <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/70 text-white font-mono text-[10px] font-bold backdrop-blur-xs">
+                        {galleryAspectRatio}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGalleryImageFile(null);
+                          setGalleryImagePreview(null);
+                          setGalleryImageUrlInput('');
+                        }}
+                        className="absolute top-2 right-2 p-1 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
 
