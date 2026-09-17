@@ -28,6 +28,7 @@ export interface BusinessService {
   location: string;
   hotline: string;
   imageSrc: string;
+  isNew?: boolean;
 }
 
 export const businessesData: BusinessService[] = [
@@ -258,6 +259,7 @@ export const businessesData: BusinessService[] = [
     location: 'කුරුණෑගල පාර හංදිය, හැට්ටිපොල',
     hotline: '037 229 1019',
     imageSrc: '/images/sections/fuel-station.png',
+    isNew: true,
   },
   {
     key: 'funeral',
@@ -372,9 +374,16 @@ export default function BusinessesSection() {
                 <div>
                   {/* Category Pill & Top Baseline Alignment with Gray Number */}
                   <div className="flex items-center justify-between gap-2 mb-3.5">
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-700 border-slate-200">
-                      {isSi ? theme.categorySi : theme.category}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-700 border-slate-200">
+                        {isSi ? theme.categorySi : theme.category}
+                      </span>
+                      {item.isNew && (
+                        <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-400 text-slate-950 shadow-2xs font-mono">
+                          {isSi ? 'නව' : 'NEW'}
+                        </span>
+                      )}
+                    </div>
                     <span className="font-mono text-xs sm:text-sm font-semibold text-neutral-400 select-none tracking-wider">
                       {String(index + 1).padStart(2, '0')}
                     </span>
