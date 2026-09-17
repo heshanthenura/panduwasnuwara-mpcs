@@ -14,11 +14,12 @@ import {
   ChevronRight, 
   Home, 
   ArrowLeft,
-  HelpCircle
+  HelpCircle,
+  Fuel
 } from 'lucide-react';
 import { businessesData, BusinessService } from '@/app/components/BusinessesSection';
 import InquiryForm from '@/app/components/InquiryForm';
-import { BusinessServiceItem } from '@/lib/types';
+import { BusinessServiceItem, FuelPrice } from '@/lib/types';
 
 export default function BusinessDetailPage() {
   const params = useParams();
@@ -37,6 +38,21 @@ export default function BusinessDetailPage() {
 
   const [services, setServices] = useState<BusinessServiceItem[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [fuelPrices, setFuelPrices] = useState<FuelPrice[]>([]);
+
+  // Fetch fuel prices if on fuel station page
+  useEffect(() => {
+    if (businessKey === 'fuel-station') {
+      fetch('/api/fuel-prices')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.prices)) {
+            setFuelPrices(data.prices);
+          }
+        })
+        .catch((err) => console.error('Error loading fuel prices:', err));
+    }
+  }, [businessKey]);
 
   // Fetch dynamic editable services from API
   useEffect(() => {
@@ -142,6 +158,93 @@ export default function BusinessDetailPage() {
 
         </div>
       </section>
+
+
+      {/* TODAY'S FUEL PRICE SECTION (EXCLUSIVE FOR FUEL STATION) */}
+      {businessKey === 'fuel-station' && (
+        <section className="w-full py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-neutral-200/80 pb-5">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2.5">
+                <span className="w-1.5 h-4 bg-amber-500 rounded-full shrink-0" />
+                <span className="text-xs sm:text-sm font-bold tracking-wider text-amber-700 uppercase">
+                  {isSi ? 'දෛනික ඉන්ධන මිල' : 'Daily Fuel Rates'}
+                </span>
+              </div>
+              <h2 className="font-condensed text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
+                {isSi ? 'අද දින ඉන්ධන මිල ගණන්' : "Today's Fuel Price"}
+              </h2>
+              <p className="text-xs sm:text-sm text-neutral-600">
+                {isSi
+                  ? 'හැට්ටිපොල සමුපකාර ඉන්ධන පිරවුම්හලේ අද දින ලීටරයක සිල්ලර මිල ගණන් මෙහි දැක්වේ.'
+                  : 'Official retail price per liter at our Hattipola Co-operative Fuel Station.'}
+              </p>
+            </div>
+
+            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold shrink-0">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+              <span>{isSi ? 'තොග ලබාගත හැක' : 'In Stock & Available'}</span>
+            </div>
+          </div>
+
+          {/* 3 Fuel Categories Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {fuelPrices.map((fuel) => {
+              const isPetrol = fuel.id === 'petrol-92';
+              const isDiesel = fuel.id === 'super-diesel';
+
+              const accentBorder = isPetrol ? 'border-red-200/80' : isDiesel ? 'border-amber-200/80' : 'border-blue-200/80';
+              const badgeBg = isPetrol ? 'bg-red-50 text-red-700 border-red-200' : isDiesel ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-blue-50 text-blue-700 border-blue-200';
+              const iconColor = isPetrol ? 'text-red-600' : isDiesel ? 'text-amber-600' : 'text-blue-600';
+              const iconBg = isPetrol ? 'bg-red-50' : isDiesel ? 'bg-amber-50' : 'bg-blue-50';
+
+              return (
+                <div
+                  key={fuel.id}
+                  className={`bg-white rounded-2xl border ${accentBorder} p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-12 h-12 rounded-xl ${iconBg} border border-neutral-200/60 flex items-center justify-center shadow-2xs`}>
+                        <Fuel className={`w-6 h-6 ${iconColor}`} />
+                      </div>
+                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${badgeBg}`}>
+                        {fuel.id === 'kerosene' ? 'Kerosene' : fuel.id === 'petrol-92' ? 'Octane 92' : 'Super Diesel'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="font-condensed text-xl font-bold text-neutral-900">
+                        {isSi ? fuel.name_si : fuel.name_en}
+                      </h3>
+                      <p className="text-[11px] text-neutral-500 font-medium">
+                        {isSi ? fuel.name_en : fuel.name_si}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3.5 border-t border-neutral-100 flex items-baseline justify-between">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
+                        {isSi ? 'ලීටරයක මිල' : 'Price Per Liter'}
+                      </span>
+                      <div className="flex items-baseline gap-1 mt-0.5">
+                        <span className="text-xs font-bold text-neutral-700">Rs.</span>
+                        <span className="font-mono text-2xl sm:text-3xl font-black text-neutral-900">
+                          {Number(fuel.price_per_liter).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-semibold text-neutral-500">
+                      / {isSi ? 'ලීටරය' : 'Liter'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
 
       {/* 2. SERVICES SECTION */}
