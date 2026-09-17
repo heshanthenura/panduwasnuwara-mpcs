@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { 
   ArrowRight, 
@@ -27,6 +28,7 @@ export interface BusinessService {
   location: string;
   hotline: string;
   imageSrc: string;
+  isNew?: boolean;
 }
 
 export const businessesData: BusinessService[] = [
@@ -257,6 +259,7 @@ export const businessesData: BusinessService[] = [
     location: 'කුරුණෑගල පාර හංදිය, හැට්ටිපොල',
     hotline: '037 229 1019',
     imageSrc: '/images/sections/fuel-station.png',
+    isNew: true,
   },
   {
     key: 'funeral',
@@ -339,11 +342,14 @@ export default function BusinessesSection() {
     >
       <div className="max-w-6xl mx-auto space-y-10 sm:space-y-12">
 
-        {/* Section Header with Co-op Rainbow Accent */}
-        <div className="text-center space-y-2 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-800">
-            <Building2 className="w-3.5 h-3.5 text-slate-700" />
-            <span>{t('eyebrow')}</span>
+        {/* Section Header */}
+        <div className="text-center space-y-2.5 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2.5 mx-auto text-[#003399]">
+            <span className="w-5 h-[2px] bg-[#003399]/40 rounded-full shrink-0" />
+            <span className="text-xs sm:text-sm font-bold tracking-wider uppercase">
+              {t('eyebrow')}
+            </span>
+            <span className="w-5 h-[2px] bg-[#003399]/40 rounded-full shrink-0" />
           </div>
 
           <h2 className="font-condensed text-2xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight pt-1">
@@ -368,9 +374,16 @@ export default function BusinessesSection() {
                 <div>
                   {/* Category Pill & Top Baseline Alignment with Gray Number */}
                   <div className="flex items-center justify-between gap-2 mb-3.5">
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-700 border-slate-200">
-                      {isSi ? theme.categorySi : theme.category}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-700 border-slate-200">
+                        {isSi ? theme.categorySi : theme.category}
+                      </span>
+                      {item.isNew && (
+                        <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-400 text-slate-950 shadow-2xs font-mono">
+                          {isSi ? 'නව' : 'NEW'}
+                        </span>
+                      )}
+                    </div>
                     <span className="font-mono text-xs sm:text-sm font-semibold text-neutral-400 select-none tracking-wider">
                       {String(index + 1).padStart(2, '0')}
                     </span>
@@ -528,12 +541,31 @@ export default function BusinessesSection() {
                   </a>
                 </div>
 
-                <button
-                  onClick={() => setSelectedBusiness(null)}
-                  className="px-6 py-2 text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 rounded-xl transition-colors cursor-pointer shadow-xs"
-                >
-                  {t('close')}
-                </button>
+                <div className="flex items-center gap-2">
+                  {selectedBusiness.key === 'rural-bank' ? (
+                    <Link
+                      href={`/${locale}/rural-bank`}
+                      className="px-4 py-2 text-xs font-semibold text-white bg-[#003399] hover:bg-[#002266] rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-xs"
+                    >
+                      <span>{isSi ? 'ග්‍රාමීය බැංකු පිටුව' : 'Explore Rural Bank'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`/${locale}/businesses/${selectedBusiness.key}`}
+                      className="px-4 py-2 text-xs font-semibold text-white bg-[#003399] hover:bg-[#002266] rounded-xl transition-colors inline-flex items-center gap-1.5 shadow-xs"
+                    >
+                      <span>{isSi ? 'අංශයේ පිටුවට' : 'Visit Business Page'}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => setSelectedBusiness(null)}
+                    className="px-5 py-2 text-xs font-semibold text-neutral-700 bg-slate-200/80 hover:bg-slate-300 rounded-xl transition-colors cursor-pointer shadow-xs"
+                  >
+                    {t('close')}
+                  </button>
+                </div>
               </div>
 
             </div>

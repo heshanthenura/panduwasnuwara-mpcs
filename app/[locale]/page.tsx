@@ -4,6 +4,7 @@ import AboutSection from '@/app/components/AboutSection';
 import BusinessesSection from '@/app/components/BusinessesSection';
 import GallerySection from '@/app/components/GallerySection';
 import NewsSection from '@/app/components/NewsSection';
+import ContactSection from '@/app/components/ContactSection';
 
 export default function Home() {
 
@@ -15,6 +16,8 @@ export default function Home() {
       <BusinessesSection />
       <GallerySection />
       <NewsSection />
+      <ContactSection />
     </div>
   );
 }
+

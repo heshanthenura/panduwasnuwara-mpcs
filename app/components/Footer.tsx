@@ -23,7 +23,7 @@ export default function Footer() {
   }
 
   return (
-    <footer id="contact" className="w-full bg-[#080d1a] text-slate-300 font-sans border-t border-slate-800 relative">
+    <footer id="footer" className="w-full bg-[#080d1a] text-slate-300 font-sans border-t border-slate-800 relative">
       
       {/* Signature Co-op 7-Color Rainbow Micro-Ribbon at Footer Top */}
       <div className="w-full h-1 bg-gradient-to-r from-[#DC2626] via-[#EA580C] via-[#EAB308] via-[#16A34A] via-[#0284C7] via-[#1D4ED8] to-[#9333EA]" />
@@ -107,9 +107,15 @@ export default function Footer() {
 
             <ul className="space-y-2.5 text-xs font-medium">
               <li>
-                <Link href="/" className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                <Link href={`/${locale}`} className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
                   <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
                   <span>{t('linkHome')}</span>
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/rural-bank`} className="text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-2 group">
+                  <span className="text-amber-400/50 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all text-sm">›</span>
+                  <span>{locale === 'si' ? 'ග්‍රාමීය බැංකු සේවා' : 'Rural Banking'}</span>
                 </Link>
               </li>
               <li>
