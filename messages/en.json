@@ -286,6 +286,7 @@
     "galleryImageHint": "Upload image file (.jpg, .png, .webp) or enter image URL",
     "messagesTab": "Messages & Inquiries",
     "servicesTab": "Business Services",
+    "fuelTab": "Fuel Prices",
     "inquiriesTitle": "Customer Inquiries & Messages",
     "inquiriesSubtitle": "Incoming inquiries routed from business pages categorized by department",
     "searchInquiriesPlaceholder": "Search inquiries by sender, subject, or phone...",

@@ -23,7 +23,7 @@ export default function Footer() {
   }
 
   return (
-    <footer id="contact" className="w-full bg-[#080d1a] text-slate-300 font-sans border-t border-slate-800 relative">
+    <footer id="footer" className="w-full bg-[#080d1a] text-slate-300 font-sans border-t border-slate-800 relative">
       
       {/* Signature Co-op 7-Color Rainbow Micro-Ribbon at Footer Top */}
       <div className="w-full h-1 bg-gradient-to-r from-[#DC2626] via-[#EA580C] via-[#EAB308] via-[#16A34A] via-[#0284C7] via-[#1D4ED8] to-[#9333EA]" />

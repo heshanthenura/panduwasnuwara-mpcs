@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateInquiryStatus, deleteInquiry, getInquiryById } from '@/lib/models/inquiry';
+import { updateInquiry, updateInquiryStatus, deleteInquiry, getInquiryById } from '@/lib/models/inquiry';
 
 function getAuthFromToken(token?: string) {
   if (!token) return null;
@@ -35,13 +35,19 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { status, admin_notes } = body;
+    const { status, admin_notes, reply_message, replied_at } = body;
 
-    if (!status || !['unread', 'read', 'replied'].includes(status)) {
+    if (status !== undefined && !['unread', 'read', 'replied'].includes(status)) {
       return NextResponse.json({ success: false, error: 'Invalid status' }, { status: 400 });
     }
 
-    const updated = await updateInquiryStatus(inquiryId, status, admin_notes);
+    const updated = await updateInquiry(inquiryId, {
+      status,
+      admin_notes,
+      reply_message,
+      replied_at
+    });
+
     if (!updated) {
       return NextResponse.json({ success: false, error: 'Inquiry not found' }, { status: 404 });
     }

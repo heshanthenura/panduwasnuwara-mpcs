@@ -119,6 +119,8 @@ export const SCHEMA_DEFINITIONS = {
       subject VARCHAR(255) NOT NULL,
       message TEXT NOT NULL,
       status VARCHAR(32) DEFAULT 'unread',
+      reply_message TEXT,
+      replied_at TIMESTAMPTZ,
       admin_notes TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -137,6 +139,15 @@ export const SCHEMA_DEFINITIONS = {
       display_order INT DEFAULT 0,
       is_active BOOLEAN DEFAULT true,
       created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
+  fuelPrices: `
+    CREATE TABLE IF NOT EXISTS fuel_prices (
+      id VARCHAR(32) PRIMARY KEY,
+      name_en VARCHAR(100) NOT NULL,
+      name_si VARCHAR(100) NOT NULL,
+      price_per_liter NUMERIC(10, 2) NOT NULL,
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
   `
@@ -164,8 +175,9 @@ export async function initDatabaseSchema(): Promise<void> {
       await query(SCHEMA_DEFINITIONS.newsAnnouncements);
       await query(SCHEMA_DEFINITIONS.inquiries);
       await query(SCHEMA_DEFINITIONS.businessServices);
+      await query(SCHEMA_DEFINITIONS.fuelPrices);
 
-      // 2. Apply incremental schema alterations
+      // 2. Apply incremental schema alterations & seed data
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(150);`);
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nic VARCHAR(50);`);
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);`);
@@ -173,7 +185,20 @@ export async function initDatabaseSchema(): Promise<void> {
       await query(`CREATE UNIQUE INDEX IF NOT EXISTS users_nic_unique ON users(LOWER(nic)) WHERE nic IS NOT NULL;`);
       await query(`CREATE INDEX IF NOT EXISTS idx_inquiries_business_key ON inquiries(business_key);`);
       await query(`CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);`);
+      await query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS reply_message TEXT;`);
+      await query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS replied_at TIMESTAMPTZ;`);
       await query(`CREATE INDEX IF NOT EXISTS idx_business_services_key ON business_services(business_key);`);
+
+      // Seed initial 3 fuel types if not exists
+      await query(`
+        INSERT INTO fuel_prices (id, name_en, name_si, price_per_liter)
+        VALUES 
+          ('kerosene', 'Kerosene', 'භූමිතෙල්', 235.00),
+          ('petrol-92', 'Petrol 92', 'පෙට්රල් 92', 311.00),
+          ('super-diesel', 'Super Diesel', 'සුපර් ඩීසල්', 328.00)
+        ON CONFLICT (id) DO NOTHING;
+      `);
+
       isInitialized = true;
     } finally {
       initPromise = null;
@@ -182,3 +207,4 @@ export async function initDatabaseSchema(): Promise<void> {
 
   return initPromise;
 }
+

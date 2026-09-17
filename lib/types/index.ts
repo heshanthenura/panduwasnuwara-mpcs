@@ -61,6 +61,8 @@ export interface Inquiry {
   subject: string;
   message: string;
   status: 'unread' | 'read' | 'replied';
+  reply_message?: string | null;
+  replied_at?: string | null;
   admin_notes?: string | null;
   created_at: string;
   updated_at: string;
@@ -78,6 +80,14 @@ export interface BusinessServiceItem {
   display_order: number;
   is_active: boolean;
   created_at: string;
+  updated_at: string;
+}
+
+export interface FuelPrice {
+  id: string;
+  name_en: string;
+  name_si: string;
+  price_per_liter: number;
   updated_at: string;
 }
 

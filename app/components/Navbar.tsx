@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { User as UserIcon, LogIn, ShieldCheck, LogOut, ArrowRight } from 'lucide-react';
+import { User as UserIcon, LogIn, ShieldCheck, LogOut, ArrowRight, ChevronDown } from 'lucide-react';
+import { businessesData } from '@/app/components/BusinessesSection';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -21,8 +22,13 @@ interface AuthState {
 export default function Navbar() {
   const t = useTranslations('Navbar');
   const locale = useLocale();
+  const isSi = locale === 'si';
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isBusinessMenuOpen, setIsBusinessMenuOpen] = useState(false);
+  const [isMobileBusinessesOpen, setIsMobileBusinessesOpen] = useState(false);
+  const businessMenuRef = useRef<HTMLDivElement>(null);
+
   const [auth, setAuth] = useState<AuthState>({
     isAuthenticated: false,
     isAdmin: false,
@@ -49,6 +55,25 @@ export default function Navbar() {
 
   useEffect(() => {
     checkAuth();
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (businessMenuRef.current && !businessMenuRef.current.contains(event.target as Node)) {
+        setIsBusinessMenuOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsBusinessMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -95,12 +120,80 @@ export default function Navbar() {
               {t('home')}
             </Link>
 
-            <Link
-              href={`/${locale}#businesses`}
-              className="hover:text-gray-300 transition-colors duration-200 py-1"
-            >
-              {t('businesses')}
-            </Link>
+            {/* Businesses Dropdown Menu */}
+            <div className="relative" ref={businessMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsBusinessMenuOpen(!isBusinessMenuOpen)}
+                className={`inline-flex items-center gap-1.5 py-1 text-xs xl:text-sm font-medium transition-colors cursor-pointer focus:outline-hidden ${
+                  isBusinessMenuOpen ? 'text-amber-400' : 'text-white hover:text-gray-300'
+                }`}
+                aria-expanded={isBusinessMenuOpen}
+              >
+                <span>{t('businesses')}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isBusinessMenuOpen ? 'rotate-180 text-amber-400' : 'text-neutral-400'}`} />
+              </button>
+
+              {/* Flyout Dropdown Menu */}
+              {isBusinessMenuOpen && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[540px] xl:w-[600px] rounded-2xl bg-[#14171f] border border-white/10 shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-3.5 bg-[#003399] rounded-full" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                        {isSi ? 'අපගේ ව්‍යාපාර අංශ' : 'Our Business Divisions'}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/${locale}#businesses`}
+                      onClick={() => setIsBusinessMenuOpen(false)}
+                      className="text-[11px] font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                    >
+                      {isSi ? 'සියලු අංශ බලන්න →' : 'View All Overview →'}
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 max-h-[380px] overflow-y-auto pr-1">
+                    {businessesData.map((b) => {
+                      const href = b.key === 'rural-bank' ? `/${locale}/rural-bank` : `/${locale}/businesses/${b.key}`;
+                      return (
+                        <Link
+                          key={b.key}
+                          href={href}
+                          onClick={() => setIsBusinessMenuOpen(false)}
+                          className="group flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all border border-transparent hover:border-white/10"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-white p-1 shrink-0 flex items-center justify-center border border-white/10 shadow-2xs group-hover:scale-105 transition-transform">
+                            <Image
+                              src={b.imageSrc}
+                              alt={b.titleEn}
+                              width={36}
+                              height={36}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors truncate">
+                                {isSi ? b.titleSi : b.titleEn}
+                              </h4>
+                              {b.isNew && (
+                                <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-sm bg-amber-400 text-slate-950 shrink-0 font-mono">
+                                  {isSi ? 'නව' : 'NEW'}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                              {isSi ? b.taglineSi : b.taglineEn}
+                            </p>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <Link
               href={`/${locale}#membership`}
@@ -213,13 +306,42 @@ export default function Navbar() {
               {t('home')}
             </Link>
 
-            <Link
-              href={`/${locale}#businesses`}
-              className="block py-2.5 hover:text-gray-300 transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              {t('businesses')}
-            </Link>
+            <div>
+              <button
+                type="button"
+                onClick={() => setIsMobileBusinessesOpen(!isMobileBusinessesOpen)}
+                className="w-full flex items-center justify-between py-2.5 hover:text-gray-300 transition-colors text-left cursor-pointer"
+              >
+                <span>{t('businesses')}</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isMobileBusinessesOpen ? 'rotate-180 text-amber-400' : 'text-neutral-400'}`} />
+              </button>
+
+              {isMobileBusinessesOpen && (
+                <div className="pl-2 pr-1 py-1.5 space-y-1 bg-black/25 rounded-xl my-1 border border-white/5 max-h-60 overflow-y-auto">
+                  {businessesData.map((b) => {
+                    const href = b.key === 'rural-bank' ? `/${locale}/rural-bank` : `/${locale}/businesses/${b.key}`;
+                    return (
+                      <Link
+                        key={b.key}
+                        href={href}
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/5 transition-colors"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-white p-0.5 shrink-0 flex items-center justify-center">
+                          <Image src={b.imageSrc} alt={b.titleEn} width={24} height={24} className="w-full h-full object-contain" />
+                        </div>
+                        <span className="text-xs text-white truncate flex-1">{isSi ? b.titleSi : b.titleEn}</span>
+                        {b.isNew && (
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-sm bg-amber-400 text-slate-950 font-mono">
+                            {isSi ? 'නව' : 'NEW'}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             <Link
               href={`/${locale}#membership`}
