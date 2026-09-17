@@ -72,22 +72,53 @@ export async function getInquiryById(id: number): Promise<Inquiry | null> {
   return rows.length > 0 ? rows[0] : null;
 }
 
+export interface UpdateInquiryInput {
+  status?: 'unread' | 'read' | 'replied';
+  admin_notes?: string | null;
+  reply_message?: string | null;
+  replied_at?: string | null;
+}
+
+export async function updateInquiry(
+  id: number,
+  input: UpdateInquiryInput
+): Promise<Inquiry | null> {
+  await initDatabaseSchema();
+  const current = await getInquiryById(id);
+  if (!current) return null;
+
+  const newStatus = input.status !== undefined ? input.status : current.status;
+  const newNotes = input.admin_notes !== undefined ? input.admin_notes : current.admin_notes;
+  const newReply = input.reply_message !== undefined ? input.reply_message : current.reply_message;
+  let newRepliedAt = input.replied_at !== undefined ? input.replied_at : current.replied_at;
+
+  if (newStatus === 'replied' && !newRepliedAt) {
+    newRepliedAt = new Date().toISOString();
+  }
+
+  const rows = await query<Inquiry>(
+    `UPDATE inquiries
+     SET status = $2,
+         admin_notes = $3,
+         reply_message = $4,
+         replied_at = $5,
+         updated_at = NOW()
+     WHERE id = $1
+     RETURNING *;`,
+    [id, newStatus, newNotes, newReply, newRepliedAt]
+  );
+  return rows.length > 0 ? rows[0] : null;
+}
+
 export async function updateInquiryStatus(
   id: number,
   status: 'unread' | 'read' | 'replied',
   adminNotes?: string
 ): Promise<Inquiry | null> {
-  await initDatabaseSchema();
-  const rows = await query<Inquiry>(
-    `UPDATE inquiries
-     SET status = $2,
-         admin_notes = COALESCE($3, admin_notes),
-         updated_at = NOW()
-     WHERE id = $1
-     RETURNING *;`,
-    [id, status, adminNotes || null]
-  );
-  return rows.length > 0 ? rows[0] : null;
+  return updateInquiry(id, {
+    status,
+    admin_notes: adminNotes !== undefined ? adminNotes : undefined
+  });
 }
 
 export async function deleteInquiry(id: number): Promise<boolean> {

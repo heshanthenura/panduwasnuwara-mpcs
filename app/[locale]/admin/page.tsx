@@ -39,9 +39,14 @@ import {
   Mail,
   CheckCheck,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  Fuel,
+  Send,
+  Copy,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
-import { User, GalleryPost, NewsAnnouncement, Inquiry, BusinessServiceItem } from '@/lib/types';
+import { User, GalleryPost, NewsAnnouncement, Inquiry, BusinessServiceItem, FuelPrice } from '@/lib/types';
 import { businessesData } from '@/app/components/BusinessesSection';
 
 const BUSINESS_CATEGORIES = [
@@ -71,7 +76,7 @@ export default function AdminDashboardPage() {
   const locale = useLocale();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<'users' | 'metrics' | 'news' | 'gallery' | 'messages' | 'services' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'metrics' | 'news' | 'gallery' | 'messages' | 'services' | 'fuel' | 'settings'>('users');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -84,6 +89,60 @@ export default function AdminDashboardPage() {
   const [yearsOfService, setYearsOfService] = useState('50');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
+
+  // Fuel Price Management State
+  const [adminFuelPrices, setAdminFuelPrices] = useState<Record<string, number>>({
+    'kerosene': 235,
+    'petrol-92': 311,
+    'super-diesel': 328
+  });
+  const [fuelUpdatedAt, setFuelUpdatedAt] = useState<string>('');
+  const [isSavingFuel, setIsSavingFuel] = useState(false);
+  const [fuelSuccess, setFuelSuccess] = useState(false);
+
+  const fetchAdminFuelPrices = async () => {
+    try {
+      const res = await fetch('/api/fuel-prices');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.prices)) {
+        const mapped: Record<string, number> = {};
+        data.prices.forEach((p: any) => {
+          mapped[p.id] = Number(p.price_per_liter) || 0;
+        });
+        setAdminFuelPrices(mapped);
+        if (data.prices[0]?.updated_at) {
+          setFuelUpdatedAt(data.prices[0].updated_at);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching admin fuel prices:', err);
+    }
+  };
+
+  const handleSaveFuelPrices = async () => {
+    setIsSavingFuel(true);
+    setFuelSuccess(false);
+    try {
+      const res = await fetch('/api/fuel-prices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prices: adminFuelPrices })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFuelSuccess(true);
+        setFuelUpdatedAt(new Date().toISOString());
+        setTimeout(() => setFuelSuccess(false), 4000);
+      } else {
+        alert(data.error || 'Failed to update fuel prices');
+      }
+    } catch (err) {
+      console.error('Error saving fuel prices:', err);
+      alert('Error saving fuel prices');
+    } finally {
+      setIsSavingFuel(false);
+    }
+  };
 
   // News Modal & Form State
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
@@ -154,6 +213,11 @@ export default function AdminDashboardPage() {
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [adminNotesInput, setAdminNotesInput] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [replyTextInput, setReplyTextInput] = useState('');
+  const [isSavingReply, setIsSavingReply] = useState(false);
+  const [notesSavedFeedback, setNotesSavedFeedback] = useState(false);
+  const [replyFeedbackMessage, setReplyFeedbackMessage] = useState<string | null>(null);
+  const [copiedPhoneFeedback, setCopiedPhoneFeedback] = useState(false);
 
   // Business Services State
   const [allServices, setAllServices] = useState<BusinessServiceItem[]>([]);
@@ -216,6 +280,8 @@ export default function AdminDashboardPage() {
           setYearsOfService(String(statsData.stats.yearsOfService));
         }
       }
+
+      await fetchAdminFuelPrices();
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -724,10 +790,52 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Format Phone Number for Calling
+  const formatCallNumber = (phone: string): string => {
+    return phone.replace(/[^0-9+]/g, '');
+  };
+
+  // Format WhatsApp Number (removes symbols, converts 07... to 947...)
+  const formatWhatsAppNumber = (phone: string): string => {
+    let digits = phone.replace(/[^0-9]/g, '');
+    if (digits.startsWith('0')) {
+      digits = '94' + digits.slice(1);
+    } else if (!digits.startsWith('94') && digits.length === 9) {
+      digits = '94' + digits;
+    }
+    return digits;
+  };
+
+  // Quick Reply Templates
+  const QUICK_REPLY_TEMPLATES = [
+    {
+      labelSi: 'විමසීම ලැබුණි',
+      labelEn: 'Inquiry Received',
+      textSi: 'ආයුබෝවන්! ඔබ විසින් පඬුවස්නුවර විවිධ සේවා සමුපකාර සමිතිය වෙත යොමු කරන ලද විමසීම අප වෙත ලැබී ඇති අතර අදාළ අංශයේ නිලධාරියෙකු කඩිනමින් ඔබව සම්බන්ධ කරගනු ඇත. ස්තූතියි.',
+      textEn: 'Hello! Your inquiry submitted to Panduwasnuwara MPCS has been received. Our officer will contact you shortly. Thank you.'
+    },
+    {
+      labelSi: 'තොරතුරු සැපයීම',
+      labelEn: 'Info Provided',
+      textSi: 'ආයුබෝවන්! ඔබ විසින් විමසන ලද තොරතුරු හා සේවාවන් පිළිබඳ විස්තර මෙසේය: ',
+      textEn: 'Hello! Here is the information and details you requested regarding our services: '
+    },
+    {
+      labelSi: 'ගැටලුව විසඳන ලදී',
+      labelEn: 'Issue Resolved',
+      textSi: 'ආයුබෝවන්! ඔබ විසින් යොමු කරන ලද විමසීම/ඉල්ලීම සාර්ථකව විසඳන ලදී. වැඩිදුර තොරතුරු අවශ්‍ය නම් ඕනෑම වේලාවක අපව අමතන්න.',
+      textEn: 'Hello! Your inquiry/request has been successfully resolved. Please contact us anytime if you need further assistance.'
+    }
+  ];
+
   // Open Inquiry Details & Auto Mark Read
   const handleSelectInquiry = async (item: Inquiry) => {
     setSelectedInquiry(item);
     setAdminNotesInput(item.admin_notes || '');
+    setReplyTextInput(item.reply_message || '');
+    setNotesSavedFeedback(false);
+    setReplyFeedbackMessage(null);
+    setCopiedPhoneFeedback(false);
 
     if (item.status === 'unread') {
       try {
@@ -747,7 +855,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Update Inquiry Status
+  // Update Inquiry Status (Unread, Read, Replied)
   const handleUpdateInquiryStatus = async (id: number, status: 'unread' | 'read' | 'replied') => {
     try {
       const res = await fetch(`/api/inquiries/${id}`, {
@@ -767,17 +875,129 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Save Admin Notes on Inquiry
-  const handleSaveAdminNotes = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Send WhatsApp Reply & Auto Mark Replied
+  const handleSendWhatsAppReply = async () => {
     if (!selectedInquiry) return;
-    setIsSavingNotes(true);
+    const cleanNumber = formatWhatsAppNumber(selectedInquiry.phone);
+    if (!cleanNumber) {
+      alert('Valid phone number not available for WhatsApp');
+      return;
+    }
+
+    const defaultGreeting = locale === 'si'
+      ? `ආයුබෝවන් ${selectedInquiry.user_name},\nඔබ විසින් පඬුවස්නුවර සමුපකාරය වෙත යොමු කරන ලද (${selectedInquiry.subject}) විමසීම සම්බන්ධයෙනි:\n\n`
+      : `Hello ${selectedInquiry.user_name},\nRegarding your inquiry (${selectedInquiry.subject}) to Panduwasnuwara MPCS:\n\n`;
+
+    const messageBody = replyTextInput.trim() || (locale === 'si' ? 'අපගේ නිලධාරියෙකු ඔබව සම්බන්ධ කරගනු ඇත. ස්තූතියි.' : 'Our representative is contacting you regarding your inquiry.');
+    const fullText = defaultGreeting + messageBody;
+    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(fullText)}`;
+
+    // Open WhatsApp
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+    // Automatically update status to 'replied' and save reply message
     try {
       const res = await fetch(`/api/inquiries/${selectedInquiry.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: selectedInquiry.status,
+          status: 'replied',
+          reply_message: messageBody,
+          replied_at: new Date().toISOString()
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.inquiry) {
+        setInquiries(prev => prev.map(i => i.id === selectedInquiry.id ? data.inquiry : i));
+        setSelectedInquiry(data.inquiry);
+        setReplyFeedbackMessage(locale === 'si' ? 'WhatsApp විවෘත වූ අතර පිළිතුරු දුන් බව සටහන් විය!' : 'WhatsApp opened & marked as Replied!');
+        setTimeout(() => setReplyFeedbackMessage(null), 4000);
+      }
+    } catch (err) {
+      console.error('Error auto-marking inquiry as replied on WhatsApp:', err);
+    }
+  };
+
+  // Send Email Reply & Auto Mark Replied
+  const handleSendEmailReply = async () => {
+    if (!selectedInquiry || !selectedInquiry.email) return;
+
+    const emailSubject = `Re: ${selectedInquiry.subject} - Panduwasnuwara MPCS`;
+    const messageBody = replyTextInput.trim() || (locale === 'si' 
+      ? `ආයුබෝවන් ${selectedInquiry.user_name},\n\nඔබගේ (${selectedInquiry.subject}) විමසීම සම්බන්ධව අපගේ අවධානය යොමු විය.\n\nස්තූතියි,\nපඬුවස්නුවර විවිධ සේවා සමුපකාර සමිතිය.`
+      : `Dear ${selectedInquiry.user_name},\n\nThank you for reaching out to Panduwasnuwara MPCS regarding "${selectedInquiry.subject}".\n\nSincerely,\nPanduwasnuwara MPCS Team.`);
+
+    const mailtoUrl = `mailto:${selectedInquiry.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(messageBody)}`;
+    window.open(mailtoUrl, '_self');
+
+    // Automatically update status to 'replied' and save reply message
+    try {
+      const res = await fetch(`/api/inquiries/${selectedInquiry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'replied',
+          reply_message: messageBody,
+          replied_at: new Date().toISOString()
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.inquiry) {
+        setInquiries(prev => prev.map(i => i.id === selectedInquiry.id ? data.inquiry : i));
+        setSelectedInquiry(data.inquiry);
+        setReplyFeedbackMessage(locale === 'si' ? 'ඊමේල් වැඩසටහන විවෘත වූ අතර පිළිතුරු දුන් බව සටහන් විය!' : 'Email composer opened & marked as Replied!');
+        setTimeout(() => setReplyFeedbackMessage(null), 4000);
+      }
+    } catch (err) {
+      console.error('Error auto-marking inquiry as replied on Email:', err);
+    }
+  };
+
+  // Save Direct Reply / Record Resolution
+  const handleSaveDirectReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInquiry) return;
+    setIsSavingReply(true);
+    setReplyFeedbackMessage(null);
+
+    try {
+      const res = await fetch(`/api/inquiries/${selectedInquiry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'replied',
+          reply_message: replyTextInput.trim(),
+          replied_at: new Date().toISOString()
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.inquiry) {
+        setInquiries(prev => prev.map(i => i.id === selectedInquiry.id ? data.inquiry : i));
+        setSelectedInquiry(data.inquiry);
+        setReplyFeedbackMessage(locale === 'si' ? 'පිළිතුර සාර්ථකව සුරකින ලදී!' : 'Reply recorded successfully!');
+        setTimeout(() => setReplyFeedbackMessage(null), 4000);
+      } else {
+        alert(data.error || 'Failed to save reply');
+      }
+    } catch (err) {
+      console.error('Error saving inquiry reply:', err);
+    } finally {
+      setIsSavingReply(false);
+    }
+  };
+
+  // Save Admin Notes on Inquiry
+  const handleSaveAdminNotes = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInquiry) return;
+    setIsSavingNotes(true);
+    setNotesSavedFeedback(false);
+
+    try {
+      const res = await fetch(`/api/inquiries/${selectedInquiry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           admin_notes: adminNotesInput
         })
       });
@@ -785,11 +1005,22 @@ export default function AdminDashboardPage() {
       if (data.success && data.inquiry) {
         setInquiries(prev => prev.map(i => i.id === selectedInquiry.id ? data.inquiry : i));
         setSelectedInquiry(data.inquiry);
+        setNotesSavedFeedback(true);
+        setTimeout(() => setNotesSavedFeedback(false), 3500);
       }
     } catch (err) {
       console.error('Error saving admin notes:', err);
     } finally {
       setIsSavingNotes(false);
+    }
+  };
+
+  // Copy phone number to clipboard
+  const handleCopyPhone = (phone: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(phone);
+      setCopiedPhoneFeedback(true);
+      setTimeout(() => setCopiedPhoneFeedback(false), 2500);
     }
   };
 
@@ -1163,6 +1394,21 @@ export default function AdminDashboardPage() {
 
             <button
               onClick={() => {
+                setActiveTab('fuel');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'fuel'
+                  ? 'bg-neutral-900 text-white shadow-xs'
+                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+              }`}
+            >
+              <Fuel className="w-4 h-4 text-amber-500" />
+              <span>{locale === 'si' ? 'ඉන්ධන මිල ගණන්' : 'Fuel Prices'}</span>
+            </button>
+
+            <button
+              onClick={() => {
                 setActiveTab('settings');
                 setIsMobileSidebarOpen(false);
               }}
@@ -1229,6 +1475,7 @@ export default function AdminDashboardPage() {
               {activeTab === 'gallery' && t('galleryTab')}
               {activeTab === 'messages' && (t('messagesTab') || 'Messages & Inquiries')}
               {activeTab === 'services' && (t('servicesTab') || 'Business Services')}
+              {activeTab === 'fuel' && (locale === 'si' ? 'ඉන්ධන සිල්ලර මිල කළමනාකරණය' : 'Fuel Price Management')}
               {activeTab === 'settings' && t('settingsTab')}
             </h1>
             <p className="text-xs text-neutral-500">
@@ -2120,12 +2367,59 @@ export default function AdminDashboardPage() {
                   );
                 })}
               </div>
+
+              {/* Status Filter Bar */}
+              <div className="flex items-center gap-2 pt-2 border-t border-neutral-100 overflow-x-auto custom-scrollbar">
+                <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider shrink-0 mr-1">
+                  {locale === 'si' ? 'තත්ත්වය:' : 'Status:'}
+                </span>
+
+                {(['all', 'unread', 'read', 'replied'] as const).map(st => {
+                  const count = inquiries.filter(i => {
+                    const matchCat = selectedInquiryCategory === 'all' || i.business_key === selectedInquiryCategory;
+                    const matchSt = st === 'all' || i.status === st;
+                    return matchCat && matchSt;
+                  }).length;
+
+                  return (
+                    <button
+                      key={st}
+                      onClick={() => setInquiryStatusFilter(st)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold shrink-0 transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
+                        inquiryStatusFilter === st
+                          ? st === 'unread'
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : st === 'replied'
+                            ? 'bg-emerald-600 text-white shadow-xs'
+                            : 'bg-neutral-800 text-white shadow-xs'
+                          : 'bg-slate-100 text-neutral-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span className="capitalize">
+                        {st === 'all'
+                          ? (locale === 'si' ? 'සියල්ල' : 'All')
+                          : st === 'unread'
+                          ? (locale === 'si' ? 'නොකියවූ' : 'Unread')
+                          : st === 'read'
+                          ? (locale === 'si' ? 'කියවූ' : 'Read')
+                          : (locale === 'si' ? 'පිළිතුරු දුන්' : 'Replied')}
+                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        inquiryStatusFilter === st ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700'
+                      }`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Inquiries Table / List */}
             {inquiries.length === 0 || (
               inquiries
                 .filter(i => selectedInquiryCategory === 'all' || i.business_key === selectedInquiryCategory)
+                .filter(i => inquiryStatusFilter === 'all' || i.status === inquiryStatusFilter)
                 .filter(i => {
                   if (!inquirySearchQuery.trim()) return true;
                   const q = inquirySearchQuery.toLowerCase();
@@ -2141,7 +2435,7 @@ export default function AdminDashboardPage() {
               <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-12 text-center space-y-2">
                 <Inbox className="w-10 h-10 text-neutral-300 mx-auto" />
                 <p className="text-sm font-semibold text-neutral-700">
-                  {t('noInquiriesFound') || 'No inquiries found for this category.'}
+                  {t('noInquiriesFound') || 'No inquiries found for this filter.'}
                 </p>
                 <p className="text-xs text-neutral-400">
                   Messages submitted by customers and members will appear here automatically.
@@ -2151,6 +2445,7 @@ export default function AdminDashboardPage() {
               <div className="space-y-3">
                 {inquiries
                   .filter(i => selectedInquiryCategory === 'all' || i.business_key === selectedInquiryCategory)
+                  .filter(i => inquiryStatusFilter === 'all' || i.status === inquiryStatusFilter)
                   .filter(i => {
                     if (!inquirySearchQuery.trim()) return true;
                     const q = inquirySearchQuery.toLowerCase();
@@ -2379,6 +2674,183 @@ export default function AdminDashboardPage() {
                     </div>
                   ))
               )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: FUEL PRICE MANAGEMENT */}
+        {activeTab === 'fuel' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Fuel className="w-5 h-5 text-amber-500" />
+                    <h2 className="font-condensed text-lg sm:text-xl font-bold text-neutral-900">
+                      {locale === 'si' ? 'ඉන්ධන සිල්ලර මිල කළමනාකරණය' : "Today's Fuel Price Management"}
+                    </h2>
+                  </div>
+                  <p className="text-xs text-neutral-500">
+                    {locale === 'si' 
+                      ? 'ඉන්ධන පිරවුම්හල් පිටුවේ ප්‍රදර්ශනය වන ලීටරයක සිල්ලර මිල ගණන් පහතින් යාවත්කාලීන කරන්න.'
+                      : 'Update the official retail price per liter for the three designated fuel categories.'}
+                  </p>
+                </div>
+
+                {fuelUpdatedAt && (
+                  <span className="text-[11px] text-neutral-400 font-mono">
+                    Last updated: {new Date(fuelUpdatedAt).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+
+              {fuelSuccess && (
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center gap-2 animate-in fade-in duration-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    {locale === 'si' 
+                      ? 'ඉන්ධන මිල ගණන් සාර්ථකව සුරැකිණි. වෙබ් අඩවියේ නව මිල ගණන් සක්‍රීය විය.'
+                      : 'Fuel prices updated successfully and are now live on the public fuel station page.'}
+                  </span>
+                </div>
+              )}
+
+              <form onSubmit={(e) => { e.preventDefault(); handleSaveFuelPrices(); }} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {/* 1. Kerosene */}
+                  <div className="p-5 rounded-2xl border border-blue-200 bg-blue-50/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                          <Fuel className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-condensed font-bold text-sm text-neutral-900">
+                            {locale === 'si' ? 'භූමිතෙල්' : 'Kerosene'}
+                          </h3>
+                          <span className="text-[10px] text-neutral-500">Kerosene / භූමිතෙල්</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200">
+                        LKR / L
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-neutral-700 block">
+                        {locale === 'si' ? 'ලීටරයක මිල (රුපියල්)' : 'Price Per Liter (Rs.)'}
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-400">Rs.</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          required
+                          value={adminFuelPrices['kerosene'] ?? 235}
+                          onChange={(e) => setAdminFuelPrices(prev => ({ ...prev, 'kerosene': parseFloat(e.target.value) || 0 }))}
+                          className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white border border-neutral-200 text-sm font-mono font-bold text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Petrol 92 */}
+                  <div className="p-5 rounded-2xl border border-red-200 bg-red-50/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-bold">
+                          <Fuel className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-condensed font-bold text-sm text-neutral-900">
+                            {locale === 'si' ? 'පෙට්රල් 92' : 'Petrol 92'}
+                          </h3>
+                          <span className="text-[10px] text-neutral-500">Octane 92 / පෙට්රල් 92</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-800 border border-red-200">
+                        LKR / L
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-neutral-700 block">
+                        {locale === 'si' ? 'ලීටරයක මිල (රුපියල්)' : 'Price Per Liter (Rs.)'}
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-400">Rs.</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          required
+                          value={adminFuelPrices['petrol-92'] ?? 311}
+                          onChange={(e) => setAdminFuelPrices(prev => ({ ...prev, 'petrol-92': parseFloat(e.target.value) || 0 }))}
+                          className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white border border-neutral-200 text-sm font-mono font-bold text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Super Diesel */}
+                  <div className="p-5 rounded-2xl border border-amber-200 bg-amber-50/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                          <Fuel className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="font-condensed font-bold text-sm text-neutral-900">
+                            {locale === 'si' ? 'සුපර් ඩීසල්' : 'Super Diesel'}
+                          </h3>
+                          <span className="text-[10px] text-neutral-500">Super Diesel / සුපර් ඩීසල්</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
+                        LKR / L
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-neutral-700 block">
+                        {locale === 'si' ? 'ලීටරයක මිල (රුපියල්)' : 'Price Per Liter (Rs.)'}
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-400">Rs.</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          required
+                          value={adminFuelPrices['super-diesel'] ?? 328}
+                          onChange={(e) => setAdminFuelPrices(prev => ({ ...prev, 'super-diesel': parseFloat(e.target.value) || 0 }))}
+                          className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white border border-neutral-200 text-sm font-mono font-bold text-neutral-900 focus:outline-hidden focus:border-[#003399]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={isSavingFuel}
+                    className="px-6 py-2.5 rounded-xl bg-[#003399] hover:bg-[#002266] text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>{isSavingFuel ? (locale === 'si' ? 'සුරකිමින්...' : 'Saving...') : (locale === 'si' ? 'මිල ගණන් යාවත්කාලීන කරන්න' : 'Update Fuel Prices')}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={fetchAdminFuelPrices}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    {locale === 'si' ? 'නැවත පූරණය' : 'Reload Current'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
@@ -2906,30 +3378,68 @@ export default function AdminDashboardPage() {
             <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-5 text-xs text-neutral-700">
               {/* Sender Details Grid */}
               <div className="p-4 rounded-2xl bg-slate-50 border border-neutral-200/90 space-y-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">
-                  {t('senderDetails') || 'Sender Information'}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">
+                    {t('senderDetails') || 'Sender Information'}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    selectedInquiry.user_id ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    {selectedInquiry.user_id ? (locale === 'si' ? 'ලියාපදිංචි සාමාජික' : 'Registered Member') : (locale === 'si' ? 'ආගන්තුක' : 'Guest')}
+                  </span>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <span className="text-neutral-500 block text-[11px]">Full Name:</span>
+                    <span className="text-neutral-500 block text-[11px]">{locale === 'si' ? 'සම්පූර්ණ නම:' : 'Full Name:'}</span>
                     <strong className="text-neutral-900 font-bold text-sm">{selectedInquiry.user_name}</strong>
                   </div>
+
                   <div>
-                    <span className="text-neutral-500 block text-[11px]">Phone / WhatsApp:</span>
-                    <a href={`tel:${selectedInquiry.phone.replace(/\s+/g, '')}`} className="font-mono font-bold text-[#003399] hover:underline text-sm">
-                      {selectedInquiry.phone}
-                    </a>
+                    <span className="text-neutral-500 block text-[11px]">{locale === 'si' ? 'දුරකථන / WhatsApp අංකය:' : 'Phone / WhatsApp:'}</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <a
+                        href={`tel:${formatCallNumber(selectedInquiry.phone)}`}
+                        className="font-mono font-bold text-[#003399] hover:underline text-sm inline-flex items-center gap-1"
+                        title={locale === 'si' ? 'ඇමතුමක් ලබාගන්න' : 'Call Phone'}
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>{selectedInquiry.phone}</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyPhone(selectedInquiry.phone)}
+                        className="px-1.5 py-0.5 rounded bg-neutral-200/70 hover:bg-neutral-200 text-neutral-700 text-[10px] font-semibold transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        title="Copy Number"
+                      >
+                        {copiedPhoneFeedback ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span className="text-emerald-700 font-bold">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3 text-neutral-500" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
+
                   <div>
-                    <span className="text-neutral-500 block text-[11px]">Email:</span>
-                    <span className="font-medium text-neutral-800">{selectedInquiry.email || '—'}</span>
+                    <span className="text-neutral-500 block text-[11px]">{locale === 'si' ? 'විද්‍යුත් තැපෑල:' : 'Email Address:'}</span>
+                    {selectedInquiry.email ? (
+                      <span className="font-medium text-neutral-800 font-mono text-[11px]">{selectedInquiry.email}</span>
+                    ) : (
+                      <span className="text-neutral-400 italic text-[11px]">{locale === 'si' ? 'ලබාදී නැත' : 'Not provided'}</span>
+                    )}
                   </div>
+
                   <div>
-                    <span className="text-neutral-500 block text-[11px]">Membership:</span>
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                      selectedInquiry.user_id ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
-                    }`}>
-                      {selectedInquiry.user_id ? 'Registered Member' : 'Guest'}
+                    <span className="text-neutral-500 block text-[11px]">{locale === 'si' ? 'ලැබුණු දිනය:' : 'Received Date:'}</span>
+                    <span className="font-mono text-neutral-600 text-[11px]">
+                      {new Date(selectedInquiry.created_at).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -2949,92 +3459,218 @@ export default function AdminDashboardPage() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">
                   {t('messageLabel') || 'Message Content'}
                 </span>
-                <div className="p-4 rounded-2xl bg-slate-50 border border-neutral-200 leading-relaxed whitespace-pre-wrap font-normal text-neutral-800">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-neutral-200 leading-relaxed whitespace-pre-wrap font-normal text-neutral-800 text-xs sm:text-sm">
                   {selectedInquiry.message}
                 </div>
               </div>
 
-              {/* Status Update Actions */}
-              <div className="pt-2 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-neutral-500">Status:</span>
-                  <button
-                    onClick={() => handleUpdateInquiryStatus(selectedInquiry.id, 'unread')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
-                      selectedInquiry.status === 'unread' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-neutral-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    Unread
-                  </button>
-                  <button
-                    onClick={() => handleUpdateInquiryStatus(selectedInquiry.id, 'read')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
-                      selectedInquiry.status === 'read' ? 'bg-neutral-800 text-white' : 'bg-slate-100 text-neutral-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    Read
-                  </button>
-                  <button
-                    onClick={() => handleUpdateInquiryStatus(selectedInquiry.id, 'replied')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
-                      selectedInquiry.status === 'replied' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-neutral-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    Replied
-                  </button>
+              {/* Status Selector Bar */}
+              <div className="p-3 rounded-xl bg-slate-50 border border-neutral-200/90 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[11px] text-neutral-700">{locale === 'si' ? 'පණිවිඩ තත්ත්වය:' : 'Status:'}</span>
+                  <div className="inline-flex rounded-lg bg-neutral-200/60 p-0.5 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateInquiryStatus(selectedInquiry.id, 'unread')}
+                      className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                        selectedInquiry.status === 'unread'
+                          ? 'bg-blue-600 text-white shadow-xs font-bold'
+                          : 'text-neutral-600 hover:text-neutral-900'
+                      }`}
+                    >
+                      {locale === 'si' ? 'නොකියවූ (Unread)' : 'Unread'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateInquiryStatus(selectedInquiry.id, 'read')}
+                      className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                        selectedInquiry.status === 'read'
+                          ? 'bg-neutral-800 text-white shadow-xs font-bold'
+                          : 'text-neutral-600 hover:text-neutral-900'
+                      }`}
+                    >
+                      {locale === 'si' ? 'කියවූ (Read)' : 'Read'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateInquiryStatus(selectedInquiry.id, 'replied')}
+                      className={`px-3 py-1 rounded-md transition-colors cursor-pointer inline-flex items-center gap-1 ${
+                        selectedInquiry.status === 'replied'
+                          ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                          : 'text-neutral-600 hover:text-neutral-900'
+                      }`}
+                    >
+                      <Check className="w-3 h-3" />
+                      <span>{locale === 'si' ? 'පිළිතුරු දුන් (Replied)' : 'Replied'}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <a
-                    href={`tel:${selectedInquiry.phone.replace(/\s+/g, '')}`}
-                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 font-semibold inline-flex items-center gap-1 transition-colors"
-                    title="Call Phone"
+                    href={`tel:${formatCallNumber(selectedInquiry.phone)}`}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-700 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                    title={locale === 'si' ? 'ඇමතුමක් ලබාගන්න' : 'Call Phone'}
                   >
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>Call</span>
+                    <Phone className="w-3.5 h-3.5 text-blue-600" />
+                    <span>{locale === 'si' ? 'ඇමතුම් (Call)' : 'Call'}</span>
                   </a>
-                  <a
-                    href={`https://wa.me/${selectedInquiry.phone.replace(/[^0-9]/g, '')}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold inline-flex items-center gap-1 transition-colors"
-                    title="WhatsApp"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    <span>WhatsApp</span>
-                  </a>
-                  {selectedInquiry.email && (
-                    <a
-                      href={`mailto:${selectedInquiry.email}?subject=Re: ${encodeURIComponent(selectedInquiry.subject)}`}
-                      className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-neutral-700 font-semibold inline-flex items-center gap-1 transition-colors"
-                      title="Email"
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                      <span>Email</span>
-                    </a>
-                  )}
                 </div>
               </div>
 
-              {/* Admin Notes Form */}
+              {/* Already Replied Notification Banner */}
+              {selectedInquiry.status === 'replied' && (
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>
+                      {locale === 'si' ? 'මෙම විමසීමට පිළිතුරු සපයා ඇත' : 'This inquiry has been marked as Replied'}
+                    </span>
+                    {selectedInquiry.replied_at && (
+                      <span className="text-[10px] font-mono text-emerald-600 font-normal">
+                        ({new Date(selectedInquiry.replied_at).toLocaleString()})
+                      </span>
+                    )}
+                  </div>
+                  {selectedInquiry.reply_message && (
+                    <p className="text-xs text-emerald-800 bg-white/70 p-2 rounded-lg border border-emerald-100 mt-1 whitespace-pre-wrap">
+                      <strong className="font-semibold text-emerald-900">{locale === 'si' ? 'යැවූ පිළිතුර:' : 'Recorded Reply:'}</strong> {selectedInquiry.reply_message}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Reply Feedback Toast */}
+              {replyFeedbackMessage && (
+                <div className="p-3 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2 animate-in fade-in duration-200">
+                  <Check className="w-4 h-4 text-emerald-700" />
+                  <span>{replyFeedbackMessage}</span>
+                </div>
+              )}
+
+              {/* CUSTOMER REPLY SECTION */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-neutral-200/90 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#003399]" />
+                    <span className="text-xs font-bold text-neutral-900">
+                      {locale === 'si' ? 'පණිවිඩයට පිළිතුරු සපයන්න (Reply to Customer)' : 'Reply to Customer'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-neutral-400 font-medium">
+                    {locale === 'si' ? 'WhatsApp හෝ ඊමේල් හරහා යැවිය හැක' : 'Dispatch via WhatsApp or Email'}
+                  </span>
+                </div>
+
+                {/* Quick Reply Template Chips */}
+                <div>
+                  <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block mb-1.5">
+                    {locale === 'si' ? 'කඩිනම් ආකෘති (Quick Templates):' : 'Quick Templates:'}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {QUICK_REPLY_TEMPLATES.map((tmpl, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setReplyTextInput(locale === 'si' ? tmpl.textSi : tmpl.textEn)}
+                        className="px-2.5 py-1 rounded-lg bg-white border border-neutral-200 hover:border-[#003399] hover:bg-blue-50/50 text-neutral-700 hover:text-[#003399] text-[11px] font-medium transition-colors cursor-pointer"
+                      >
+                        {locale === 'si' ? tmpl.labelSi : tmpl.labelEn}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Reply Message Textarea */}
+                <textarea
+                  rows={3}
+                  value={replyTextInput}
+                  onChange={(e) => setReplyTextInput(e.target.value)}
+                  placeholder={
+                    locale === 'si'
+                      ? 'පාරිභෝගිකයා වෙත යැවිය යුතු පිළිතුර මෙහි ලියන්න... (WhatsApp හෝ ඊමේල් මඟින් යැවිය හැක)'
+                      : 'Type your reply message here to send via WhatsApp, Email, or save as official record...'
+                  }
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs focus:outline-hidden focus:border-[#003399] leading-relaxed resize-y"
+                />
+
+                {/* Action Buttons Row */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <div className="flex items-center gap-2">
+                    {/* Send WhatsApp Reply Button */}
+                    <button
+                      type="button"
+                      onClick={handleSendWhatsAppReply}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                      title={locale === 'si' ? 'WhatsApp මඟින් පිළිතුර යවන්න' : 'Send reply via WhatsApp'}
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>{locale === 'si' ? 'WhatsApp පිළිතුර' : 'WhatsApp Reply'}</span>
+                    </button>
+
+                    {/* Send Email Reply Button */}
+                    {selectedInquiry.email ? (
+                      <button
+                        type="button"
+                        onClick={handleSendEmailReply}
+                        className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                        title={locale === 'si' ? 'ඊමේල් මඟින් පිළිතුර යවන්න' : 'Send reply via Email'}
+                      >
+                        <Mail className="w-4 h-4" />
+                        <span>{locale === 'si' ? 'ඊමේල් පිළිතුර' : 'Email Reply'}</span>
+                      </button>
+                    ) : (
+                      <span className="text-[10px] text-neutral-400 italic px-2">
+                        {locale === 'si' ? '(ඊමේල් ලිපිනයක් සපයා නැත)' : '(No email provided)'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Save Direct Reply Record */}
+                  <button
+                    type="button"
+                    onClick={handleSaveDirectReply}
+                    disabled={isSavingReply || !replyTextInput.trim()}
+                    className="px-3 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-900 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>{isSavingReply ? 'Saving...' : (locale === 'si' ? 'පිළිතුර සුරකින්න (Record)' : 'Save Record')}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Administrative Internal Notes Form */}
               <form onSubmit={handleSaveAdminNotes} className="space-y-2 pt-2 border-t border-neutral-100">
-                <label className="block text-xs font-bold text-neutral-700">
-                  {t('adminNotesLabel') || 'Administrative Internal Notes'}
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    {t('adminNotesLabel') || (locale === 'si' ? 'පරිපාලන අභ්‍යන්තර සටහන්' : 'Administrative Internal Notes')}
+                  </label>
+                  {notesSavedFeedback && (
+                    <span className="text-[11px] font-bold text-emerald-600 inline-flex items-center gap-1 animate-in fade-in duration-200">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{locale === 'si' ? 'සාර්ථකව සුරැකිණි!' : 'Saved successfully!'}</span>
+                    </span>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={adminNotesInput}
                     onChange={(e) => setAdminNotesInput(e.target.value)}
-                    placeholder="Add follow-up notes, assigned officer, or status..."
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-neutral-200 text-xs focus:outline-hidden focus:border-[#003399]"
+                    placeholder={
+                      locale === 'si'
+                        ? 'අභ්‍යන්තර සටහනක් හෝ පැවරුණු නිලධාරියා ඇතුළත් කරන්න...'
+                        : 'Add follow-up notes, assigned officer, or internal action...'
+                    }
+                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-hidden focus:border-[#003399]"
                   />
                   <button
                     type="submit"
                     disabled={isSavingNotes}
-                    className="px-4 py-2 rounded-xl bg-[#003399] hover:bg-[#002266] text-white font-bold text-xs cursor-pointer shadow-xs disabled:opacity-50"
+                    className="px-4 py-2.5 rounded-xl bg-[#003399] hover:bg-[#002266] text-white font-bold text-xs cursor-pointer shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5 transition-colors"
                   >
-                    {isSavingNotes ? 'Saving...' : 'Save'}
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{isSavingNotes ? 'Saving...' : (locale === 'si' ? 'සුරකින්න' : 'Save')}</span>
                   </button>
                 </div>
               </form>
