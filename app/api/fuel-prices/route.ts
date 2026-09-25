@@ -28,7 +28,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.cookies.get('auth_token')?.value;
+    const token =
+      req.cookies.get('mpcs_admin_token')?.value ||
+      req.cookies.get('mpcs_auth_token')?.value ||
+      req.cookies.get('auth_token')?.value;
     const auth = getAuthFromToken(token);
     if (!auth || !auth.isAdmin) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Admin access required' }, { status: 401 });
@@ -57,3 +60,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export const PUT = POST;
