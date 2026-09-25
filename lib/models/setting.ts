@@ -1,19 +1,28 @@
-import { query } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 
 export async function getSetting(key: string, defaultValue: string = ''): Promise<string> {
-  const rows = await query<{ value: string }>(`
-    SELECT value FROM settings WHERE key = $1;
-  `, [key]);
+  const { data, error } = await supabase
+    .from('settings')
+    .select('value')
+    .eq('key', key)
+    .maybeSingle();
 
-  return rows.length > 0 ? rows[0].value : defaultValue;
+  if (error || !data) return defaultValue;
+  return data.value;
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
-  await query(`
-    INSERT INTO settings (key, value, updated_at)
-    VALUES ($1, $2, NOW())
-    ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW();
-  `, [key, value.trim()]);
+  const { error } = await supabase
+    .from('settings')
+    .upsert({
+      key,
+      value: value.trim(),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'key' });
+
+  if (error) {
+    console.error(`Error setting setting ${key}:`, error);
+  }
 }
 
 export async function getRecoveryWhatsAppNumber(): Promise<string> {
