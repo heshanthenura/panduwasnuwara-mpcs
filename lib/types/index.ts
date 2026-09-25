@@ -68,6 +68,31 @@ export interface Inquiry {
   updated_at: string;
 }
 
+export interface BusinessItem {
+  id: number;
+  key: string;
+  title_si: string;
+  title_en: string;
+  tagline_si?: string | null;
+  tagline_en?: string | null;
+  category_si?: string | null;
+  category_en?: string | null;
+  description_si?: string | null;
+  description_en?: string | null;
+  manager?: string | null;
+  location?: string | null;
+  hotline?: string | null;
+  image_src?: string | null;
+  cover_image?: string | null;
+  is_new?: boolean;
+  is_active?: boolean;
+  display_order?: number;
+  services?: string[];
+  services_en?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface BusinessServiceItem {
   id: number;
   business_key: string;
