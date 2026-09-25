@@ -140,6 +140,96 @@ export async function uploadEligibleVoters(
 }
 
 /**
+ * Query imported members with optional search query and pagination
+ */
+export async function getImportedMembersList(
+  search?: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<{ members: any[]; total: number }> {
+  const sanitizedLimit = Math.min(Math.max(limit, 1), 100);
+  const sanitizedOffset = Math.max(offset, 0);
+
+  if (search && search.trim()) {
+    const q = `%${search.trim()}%`;
+    const countRes = await query<{ count: string }>(`
+      SELECT COUNT(*)::text AS count FROM imported_members
+      WHERE full_name ILIKE $1 OR nic ILIKE $1 OR member_number ILIKE $1;
+    `, [q]);
+    const total = parseInt(countRes[0]?.count || '0', 10);
+
+    const rows = await query(`
+      SELECT id, member_number, full_name, nic, phone, imported_at
+      FROM imported_members
+      WHERE full_name ILIKE $1 OR nic ILIKE $1 OR member_number ILIKE $1
+      ORDER BY id ASC
+      LIMIT $2 OFFSET $3;
+    `, [q, sanitizedLimit, sanitizedOffset]);
+
+    return { members: rows, total };
+  }
+
+  const countRes = await query<{ count: string }>(`
+    SELECT COUNT(*)::text AS count FROM imported_members;
+  `);
+  const total = parseInt(countRes[0]?.count || '0', 10);
+
+  const rows = await query(`
+    SELECT id, member_number, full_name, nic, phone, imported_at
+    FROM imported_members
+    ORDER BY id ASC
+    LIMIT $1 OFFSET $2;
+  `, [sanitizedLimit, sanitizedOffset]);
+
+  return { members: rows, total };
+}
+
+/**
+ * Query eligible voters with optional search query and pagination
+ */
+export async function getEligibleVotersList(
+  search?: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<{ voters: any[]; total: number }> {
+  const sanitizedLimit = Math.min(Math.max(limit, 1), 100);
+  const sanitizedOffset = Math.max(offset, 0);
+
+  if (search && search.trim()) {
+    const q = `%${search.trim()}%`;
+    const countRes = await query<{ count: string }>(`
+      SELECT COUNT(*)::text AS count FROM eligible_voters
+      WHERE full_name ILIKE $1 OR nic ILIKE $1 OR voter_number ILIKE $1 OR division ILIKE $1;
+    `, [q]);
+    const total = parseInt(countRes[0]?.count || '0', 10);
+
+    const rows = await query(`
+      SELECT id, voter_number, full_name, nic, division, uploaded_at
+      FROM eligible_voters
+      WHERE full_name ILIKE $1 OR nic ILIKE $1 OR voter_number ILIKE $1 OR division ILIKE $1
+      ORDER BY id ASC
+      LIMIT $2 OFFSET $3;
+    `, [q, sanitizedLimit, sanitizedOffset]);
+
+    return { voters: rows, total };
+  }
+
+  const countRes = await query<{ count: string }>(`
+    SELECT COUNT(*)::text AS count FROM eligible_voters;
+  `);
+  const total = parseInt(countRes[0]?.count || '0', 10);
+
+  const rows = await query(`
+    SELECT id, voter_number, full_name, nic, division, uploaded_at
+    FROM eligible_voters
+    ORDER BY id ASC
+    LIMIT $1 OFFSET $2;
+  `, [sanitizedLimit, sanitizedOffset]);
+
+  return { voters: rows, total };
+}
+
+/**
  * Years of service configuration
  */
 export async function getYearsOfService(): Promise<number> {

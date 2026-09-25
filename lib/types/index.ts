@@ -91,3 +91,38 @@ export interface FuelPrice {
   updated_at: string;
 }
 
+export interface MembershipApplication {
+  id: number;
+  user_id?: number | null;
+  full_name_si: string;
+  full_name_en: string;
+  address: string;
+  postal_address: string;
+  nic: string;
+  phone: string;
+  email?: string | null;
+  certified_form_photo: string;
+  status: 'pending' | 'approved' | 'rejected';
+  admin_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ImportedMember {
+  id: number;
+  member_number?: string | null;
+  full_name: string;
+  nic?: string | null;
+  phone?: string | null;
+  imported_at: string;
+}
+
+export interface EligibleVoter {
+  id: number;
+  voter_number?: string | null;
+  full_name: string;
+  nic?: string | null;
+  division?: string | null;
+  uploaded_at: string;
+}
+
