@@ -35,6 +35,27 @@ export default function Navbar() {
     isAdmin: false,
     user: null
   });
+  const [navBusinesses, setNavBusinesses] = useState<any[]>(businessesData);
+
+  useEffect(() => {
+    fetch('/api/businesses')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.businesses) && data.businesses.length > 0) {
+          const mapped = data.businesses.map((b: any) => ({
+            key: b.key,
+            titleSi: b.title_si,
+            titleEn: b.title_en,
+            taglineSi: b.tagline_si || '',
+            taglineEn: b.tagline_en || '',
+            imageSrc: b.image_src || '/logo-photo.jpg',
+            isNew: Boolean(b.is_new)
+          }));
+          setNavBusinesses(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const checkAuth = async () => {
     try {
@@ -155,7 +176,7 @@ export default function Navbar() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 max-h-[380px] overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
-                    {businessesData.map((b) => {
+                    {navBusinesses.map((b) => {
                       const href = b.key === 'rural-bank' ? `/${locale}/rural-bank` : `/${locale}/businesses/${b.key}`;
                       return (
                         <Link
@@ -314,7 +335,7 @@ export default function Navbar() {
 
               {isMobileBusinessesOpen && (
                 <div className="pl-2 pr-1 py-1.5 space-y-1 bg-black/25 rounded-xl my-1 border border-white/5 max-h-60 overflow-y-auto">
-                  {businessesData.map((b) => {
+                  {navBusinesses.map((b) => {
                     const href = b.key === 'rural-bank' ? `/${locale}/rural-bank` : `/${locale}/businesses/${b.key}`;
                     return (
                       <Link
