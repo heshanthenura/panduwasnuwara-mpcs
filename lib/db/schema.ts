@@ -77,6 +77,24 @@ export const SCHEMA_DEFINITIONS = {
       uploaded_at TIMESTAMPTZ DEFAULT NOW()
     );
   `,
+  membershipApplications: `
+    CREATE TABLE IF NOT EXISTS membership_applications (
+      id SERIAL PRIMARY KEY,
+      user_id INT REFERENCES users(id) ON DELETE SET NULL,
+      full_name_si VARCHAR(255) NOT NULL,
+      full_name_en VARCHAR(255) NOT NULL,
+      address TEXT NOT NULL,
+      postal_address TEXT NOT NULL,
+      nic VARCHAR(50) NOT NULL,
+      phone VARCHAR(50) NOT NULL,
+      email VARCHAR(255),
+      certified_form_photo TEXT NOT NULL,
+      status VARCHAR(32) DEFAULT 'pending',
+      admin_notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `,
   businesses: `
     CREATE TABLE IF NOT EXISTS businesses (
       id SERIAL PRIMARY KEY,
@@ -176,6 +194,7 @@ export async function initDatabaseSchema(): Promise<void> {
       await query(SCHEMA_DEFINITIONS.inquiries);
       await query(SCHEMA_DEFINITIONS.businessServices);
       await query(SCHEMA_DEFINITIONS.fuelPrices);
+      await query(SCHEMA_DEFINITIONS.membershipApplications);
 
       // 2. Apply incremental schema alterations & seed data
       await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(150);`);
@@ -188,6 +207,8 @@ export async function initDatabaseSchema(): Promise<void> {
       await query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS reply_message TEXT;`);
       await query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS replied_at TIMESTAMPTZ;`);
       await query(`CREATE INDEX IF NOT EXISTS idx_business_services_key ON business_services(business_key);`);
+      await query(`CREATE INDEX IF NOT EXISTS idx_membership_applications_nic ON membership_applications(nic);`);
+      await query(`CREATE INDEX IF NOT EXISTS idx_membership_applications_status ON membership_applications(status);`);
 
       // Seed initial 3 fuel types if not exists
       await query(`
