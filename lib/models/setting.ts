@@ -19,3 +19,26 @@ export async function setSetting(key: string, value: string): Promise<void> {
 export async function getRecoveryWhatsAppNumber(): Promise<string> {
   return await getSetting('recovery_whatsapp_number', '94771234567');
 }
+
+export async function getContactDestinationEmail1(): Promise<string> {
+  return await getSetting('contact_destination_email_1', '');
+}
+
+export async function getContactDestinationEmail2(): Promise<string> {
+  return await getSetting('contact_destination_email_2', '');
+}
+
+export async function getContactNotificationEmails(): Promise<string[]> {
+  const [email1, email2] = await Promise.all([
+    getContactDestinationEmail1(),
+    getContactDestinationEmail2()
+  ]);
+
+  const emails: string[] = [];
+  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+
+  if (email1 && isValidEmail(email1)) emails.push(email1.trim());
+  if (email2 && isValidEmail(email2)) emails.push(email2.trim());
+
+  return emails;
+}

@@ -87,6 +87,9 @@ export default function AdminDashboardPage() {
   const [newsCategoryFilter, setNewsCategoryFilter] = useState('all');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [yearsOfService, setYearsOfService] = useState('50');
+  const [contactEmail1, setContactEmail1] = useState('');
+  const [contactEmail2, setContactEmail2] = useState('');
+  const [hasSmtpConfigured, setHasSmtpConfigured] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
 
@@ -272,6 +275,15 @@ export default function AdminDashboardPage() {
         }
         if (settingsData.settings?.yearsOfService) {
           setYearsOfService(String(settingsData.settings.yearsOfService));
+        }
+        if (settingsData.settings?.contactEmail1) {
+          setContactEmail1(settingsData.settings.contactEmail1);
+        }
+        if (settingsData.settings?.contactEmail2) {
+          setContactEmail2(settingsData.settings.contactEmail2);
+        }
+        if (settingsData.settings?.hasSmtpConfigured !== undefined) {
+          setHasSmtpConfigured(settingsData.settings.hasSmtpConfigured);
         }
       }
       if (statsData.success && statsData.stats) {
@@ -522,7 +534,9 @@ export default function AdminDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           recoveryWhatsAppNumber: whatsappNumber,
-          yearsOfService: parsedYears
+          yearsOfService: parsedYears,
+          contactEmail1: contactEmail1.trim(),
+          contactEmail2: contactEmail2.trim()
         })
       });
       const data = await res.json();
@@ -2275,6 +2289,88 @@ export default function AdminDashboardPage() {
                 <p className="text-[11px] text-neutral-400">
                   {t('yearsSettingDesc')}
                 </p>
+              </div>
+
+              {/* Contact Form Destination Emails Section */}
+              <div className="space-y-4 pt-4 border-t border-neutral-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[#003399]">
+                    <Mail className="w-4 h-4" />
+                    <label className="block text-xs font-bold text-neutral-900">
+                      {locale === 'si' ? 'වෙබ් විමසීම් දැනුම්දීමේ ඊමේල් ලිපින' : 'Contact Form Submission Emails'}
+                    </label>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    hasSmtpConfigured ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
+                  }`}>
+                    {hasSmtpConfigured ? 'SMTP Mailer Configured' : 'SMTP Inactive (Set in .env.local)'}
+                  </span>
+                </div>
+
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  {locale === 'si'
+                    ? 'පාරිභෝගිකයින් විසින් වෙබ් අඩවියේ විමසීම් පෝරමය හරහා යොමු කරනු ලබන පණිවිඩ පහත සඳහන් ඊමේල් ලිපින වෙත සෘජුවම යොමු කෙරේ. මෙහි එක් ලිපිනයක් හෝ ලිපින දෙකම ඇතුළත් කළ හැක.'
+                    : 'Inquiries submitted through the website contact form will be automatically delivered to the email addresses specified below. Works whether one or both emails are added.'}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold text-neutral-700">
+                      {locale === 'si' ? 'ප්‍රධාන ඊමේල් ලිපිනය (Email 1)' : 'Primary Destination Email (Email 1)'}
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        value={contactEmail1}
+                        onChange={e => setContactEmail1(e.target.value)}
+                        placeholder="e.g. induwara@gmail.com"
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-bold text-neutral-700">
+                      {locale === 'si' ? 'ද්විතියික ඊමේල් ලිපිනය (Email 2 - අත්‍යවශ්‍ය නොවේ)' : 'Secondary Destination Email (Email 2 - Optional)'}
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        value={contactEmail2}
+                        onChange={e => setContactEmail2(e.target.value)}
+                        placeholder="e.g. manager@panduwasnuwara.lk"
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs text-neutral-900 focus:outline-hidden focus:border-[#003399] font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery Configuration Summary & Format Preview */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-neutral-200 text-xs space-y-2">
+                  <div className="flex items-center gap-1.5 font-bold text-neutral-700">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                    <span>
+                      {locale === 'si' ? 'පණිවිඩ බෙදාහැරීමේ තත්ත්වය:' : 'Current Delivery Configuration:'}
+                    </span>
+                    <span className="font-mono text-neutral-900">
+                      {contactEmail1 && contactEmail2
+                        ? (locale === 'si' ? 'ලිපින 2 ටම යොමු කෙරේ (Delivering to both)' : 'Delivering to both addresses')
+                        : contactEmail1 || contactEmail2
+                        ? `${locale === 'si' ? 'එක් ලිපිනයකට යොමු කෙරේ:' : 'Delivering to single address:'} ${contactEmail1 || contactEmail2}`
+                        : (locale === 'si' ? 'දැනුම්දීම් අක්‍රියයි (ලිපිනයක් සකසා නැත)' : 'No notification emails configured')}
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] text-neutral-600 font-mono bg-white p-2.5 rounded-lg border border-neutral-200 leading-relaxed">
+                    <div className="font-bold text-neutral-700 mb-1">Standard Message Format Delivered:</div>
+                    Name: Induwara<br /><br />
+                    Email: induwara@gmail.com<br /><br />
+                    Phone Number: 019283839<br /><br />
+                    Message: iwhwbenwsksish
+                  </div>
+                </div>
               </div>
 
               <button
