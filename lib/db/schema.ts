@@ -1,5 +1,4 @@
-import { query } from '@/lib/db';
-
+// Database schema definitions for reference
 export const SCHEMA_DEFINITIONS = {
   users: `
     CREATE TABLE IF NOT EXISTS users (
@@ -101,10 +100,23 @@ export const SCHEMA_DEFINITIONS = {
       key VARCHAR(64) UNIQUE NOT NULL,
       title_si VARCHAR(255) NOT NULL,
       title_en VARCHAR(255) NOT NULL,
+      tagline_si TEXT,
+      tagline_en TEXT,
+      category_si VARCHAR(100),
+      category_en VARCHAR(100),
+      description_si TEXT,
+      description_en TEXT,
       manager VARCHAR(150),
+      location TEXT,
       hotline VARCHAR(50),
+      image_src TEXT,
+      is_new BOOLEAN DEFAULT false,
       is_active BOOLEAN DEFAULT true,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      display_order INT DEFAULT 0,
+      services JSONB DEFAULT '[]'::jsonb,
+      services_en JSONB DEFAULT '[]'::jsonb,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     );
   `,
   newsAnnouncements: `
@@ -168,64 +180,18 @@ export const SCHEMA_DEFINITIONS = {
       price_per_liter NUMERIC(10, 2) NOT NULL,
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
+  `,
+  guestSessions: `
+    CREATE TABLE IF NOT EXISTS guest_sessions (
+      session_id VARCHAR(64) PRIMARY KEY,
+      last_seen TIMESTAMPTZ DEFAULT NOW()
+    );
   `
 };
 
-let isInitialized = false;
-let initPromise: Promise<void> | null = null;
-
 export async function initDatabaseSchema(): Promise<void> {
-  if (isInitialized) return;
-  if (initPromise) return initPromise;
-
-  initPromise = (async () => {
-    try {
-      // 1. Create base tables
-      await query(SCHEMA_DEFINITIONS.users);
-      await query(SCHEMA_DEFINITIONS.adminUsers);
-      await query(SCHEMA_DEFINITIONS.galleryPosts);
-      await query(SCHEMA_DEFINITIONS.galleryLikes);
-      await query(SCHEMA_DEFINITIONS.galleryComments);
-      await query(SCHEMA_DEFINITIONS.settings);
-      await query(SCHEMA_DEFINITIONS.importedMembers);
-      await query(SCHEMA_DEFINITIONS.eligibleVoters);
-      await query(SCHEMA_DEFINITIONS.businesses);
-      await query(SCHEMA_DEFINITIONS.newsAnnouncements);
-      await query(SCHEMA_DEFINITIONS.inquiries);
-      await query(SCHEMA_DEFINITIONS.businessServices);
-      await query(SCHEMA_DEFINITIONS.fuelPrices);
-      await query(SCHEMA_DEFINITIONS.membershipApplications);
-
-      // 2. Apply incremental schema alterations & seed data
-      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(150);`);
-      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nic VARCHAR(50);`);
-      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);`);
-      await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
-      await query(`CREATE UNIQUE INDEX IF NOT EXISTS users_nic_unique ON users(LOWER(nic)) WHERE nic IS NOT NULL;`);
-      await query(`CREATE INDEX IF NOT EXISTS idx_inquiries_business_key ON inquiries(business_key);`);
-      await query(`CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);`);
-      await query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS reply_message TEXT;`);
-      await query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS replied_at TIMESTAMPTZ;`);
-      await query(`CREATE INDEX IF NOT EXISTS idx_business_services_key ON business_services(business_key);`);
-      await query(`CREATE INDEX IF NOT EXISTS idx_membership_applications_nic ON membership_applications(nic);`);
-      await query(`CREATE INDEX IF NOT EXISTS idx_membership_applications_status ON membership_applications(status);`);
-
-      // Seed initial 3 fuel types if not exists
-      await query(`
-        INSERT INTO fuel_prices (id, name_en, name_si, price_per_liter)
-        VALUES 
-          ('kerosene', 'Kerosene', 'භූමිතෙල්', 235.00),
-          ('petrol-92', 'Petrol 92', 'පෙට්රල් 92', 311.00),
-          ('super-diesel', 'Super Diesel', 'සුපර් ඩීසල්', 328.00)
-        ON CONFLICT (id) DO NOTHING;
-      `);
-
-      isInitialized = true;
-    } finally {
-      initPromise = null;
-    }
-  })();
-
-  return initPromise;
+  // Schema is already provisioned in Supabase.
+  // Instant no-op to prevent query roundtrips and delay.
+  return Promise.resolve();
 }
 

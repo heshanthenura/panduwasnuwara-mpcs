@@ -1,21 +1,21 @@
 import { NextResponse } from 'next/server';
-import { getLiveStats } from '@/lib/models/stats';
+import { getAllBusinesses } from '@/lib/models/business';
 
 export async function GET() {
   try {
-    const stats = await getLiveStats();
+    const businesses = await getAllBusinesses(true);
     return NextResponse.json({
       success: true,
-      stats
+      businesses
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
       }
     });
-  } catch (err) {
-    console.error('Error fetching live stats:', err);
+  } catch (error) {
+    console.error('Error fetching businesses:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch live stats' },
+      { success: false, error: 'Failed to fetch businesses' },
       { status: 500 }
     );
   }
