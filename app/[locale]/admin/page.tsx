@@ -44,10 +44,12 @@ import {
   Send,
   Copy,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  FileCheck
 } from 'lucide-react';
 import { User, GalleryPost, NewsAnnouncement, Inquiry, BusinessServiceItem, FuelPrice } from '@/lib/types';
 import { businessesData } from '@/app/components/BusinessesSection';
+import MembershipApplicationsTab from '@/app/components/admin/MembershipApplicationsTab';
 
 const BUSINESS_CATEGORIES = [
   { key: 'rural-bank', titleEn: 'Rural Bank', titleSi: 'ග්‍රාමීය බැංකුව' },
@@ -76,7 +78,9 @@ export default function AdminDashboardPage() {
   const locale = useLocale();
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<'users' | 'metrics' | 'news' | 'gallery' | 'messages' | 'services' | 'fuel' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'applications' | 'metrics' | 'news' | 'gallery' | 'messages' | 'services' | 'fuel' | 'settings'>('users');
+  const [appsTotalCount, setAppsTotalCount] = useState(0);
+  const [appsPendingCount, setAppsPendingCount] = useState(0);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -241,14 +245,15 @@ export default function AdminDashboardPage() {
   const loadAdminData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [usersRes, galleryRes, settingsRes, statsRes, newsRes, inquiriesRes, servicesRes] = await Promise.all([
+      const [usersRes, galleryRes, settingsRes, statsRes, newsRes, inquiriesRes, servicesRes, appsRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/gallery'),
         fetch('/api/admin/settings'),
         fetch('/api/stats'),
         fetch('/api/admin/news'),
         fetch('/api/inquiries'),
-        fetch('/api/admin/services')
+        fetch('/api/admin/services'),
+        fetch('/api/admin/membership-applications')
       ]);
 
       const usersData = await usersRes.json();
@@ -258,6 +263,7 @@ export default function AdminDashboardPage() {
       const newsData = await newsRes.json();
       const inquiriesData = await inquiriesRes.json();
       const servicesData = await servicesRes.json();
+      const appsData = await appsRes.json();
 
       if (usersData.success) setUsers(usersData.users);
       if (galleryData.success) setGalleryPosts(galleryData.posts);
@@ -268,6 +274,10 @@ export default function AdminDashboardPage() {
       }
       if (servicesData.success) {
         setAllServices(servicesData.services || []);
+      }
+      if (appsData.success && Array.isArray(appsData.applications)) {
+        setAppsTotalCount(appsData.applications.length);
+        setAppsPendingCount(appsData.applications.filter((a: any) => a.status === 'pending').length);
       }
       if (settingsData.success) {
         if (settingsData.settings?.recoveryWhatsAppNumber) {
@@ -1288,6 +1298,36 @@ export default function AdminDashboardPage() {
               </span>
             </button>
 
+            {/* Membership Applications Tab */}
+            <button
+              onClick={() => {
+                setActiveTab('applications');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                activeTab === 'applications'
+                  ? 'bg-neutral-900 text-white shadow-xs'
+                  : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <FileCheck className="w-4 h-4 text-[#003399]" />
+                <span>{locale === 'si' ? 'සාමාජික අයදුම්පත්' : 'Membership Applications'}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {appsPendingCount > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                )}
+                <span
+                  className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${
+                    activeTab === 'applications' ? 'bg-neutral-800 text-neutral-200' : 'bg-neutral-100 text-neutral-500'
+                  }`}
+                >
+                  {appsTotalCount}
+                </span>
+              </div>
+            </button>
+
             <button
               onClick={() => {
                 setActiveTab('metrics');
@@ -1484,6 +1524,7 @@ export default function AdminDashboardPage() {
           <div>
             <h1 className="font-condensed text-xl font-bold text-neutral-900 leading-tight">
               {activeTab === 'users' && t('usersTab')}
+              {activeTab === 'applications' && (locale === 'si' ? 'සාමාජිකත්ව අයදුම්පත් කළමනාකරණය' : 'Membership Applications Management')}
               {activeTab === 'metrics' && t('metricsTab')}
               {activeTab === 'news' && t('newsTab')}
               {activeTab === 'gallery' && t('galleryTab')}
@@ -1493,7 +1534,9 @@ export default function AdminDashboardPage() {
               {activeTab === 'settings' && t('settingsTab')}
             </h1>
             <p className="text-xs text-neutral-500">
-              {t('subtitle')}
+              {activeTab === 'applications' 
+                ? (locale === 'si' ? 'අන්තර්ජාලය හරහා ඉදිරිපත් කළ සාමාජික අයදුම්පත් පරීක්ෂා කිරීම, අනුමත කිරීම, සංස්කරණය හා මකා දැමීම' : 'Review, approve, edit, and manage member registration submissions and certified forms')
+                : t('subtitle')}
             </p>
           </div>
 
@@ -1510,6 +1553,16 @@ export default function AdminDashboardPage() {
 
         {/* Content Container */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full">
+        {/* TAB: MEMBERSHIP APPLICATIONS */}
+        {activeTab === 'applications' && (
+          <MembershipApplicationsTab
+            onCountChange={(total, pending) => {
+              setAppsTotalCount(total);
+              setAppsPendingCount(pending);
+            }}
+          />
+        )}
+
         {/* TAB 1: USERS MANAGEMENT */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
